@@ -11,20 +11,85 @@
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* CSS Variables for theming */
+        :root {
+            --bg-color-from: #f8f8f8;
+            --bg-color-to: #f0f0f0;
+            --text-color: #333;
+            --nav-bg: rgba(255, 255, 255, 0.9);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --border-color: #f0f0f0;
+            --main-gradient-from: #8b5cf6; /* purple-500 */
+            --main-gradient-to: #ec4899; /* pink-500 */
+            --button-pink: #f472b6; /* pink-400 */
+            --button-purple: #a78bfa; /* indigo-400 */
+            --button-green: #4ade80; /* green-400 */
+            --button-blue: #60a5fa; /* blue-400 */
+            --button-pink-hover: #ec4899; /* pink-500 */
+            --button-purple-hover: #8b5cf6; /* indigo-500 */
+            --button-green-hover: #22c55e; /* green-500 */
+            --button-blue-hover: #3b82f6; /* blue-500 */
+            --scrollbar-thumb: rgba(139, 92, 246, 0.4);
+            --scrollbar-thumb-hover: rgba(139, 92, 246, 0.6);
+        }
+
+        /* Dark Theme */
+        body.dark-theme {
+            --bg-color-from: #1a202c; /* gray-900 */
+            --bg-color-to: #2d3748; /* gray-800 */
+            --text-color: #e2e8f0; /* gray-200 */
+            --nav-bg: rgba(45, 55, 72, 0.9); /* gray-800 semi-transparent */
+            --card-bg: rgba(26, 32, 44, 0.95); /* gray-900 semi-transparent */
+            --border-color: #4a5568; /* gray-600 */
+            --main-gradient-from: #a78bfa; /* indigo-400 */
+            --main-gradient-to: #fbcfe8; /* pink-200 */
+            --button-pink: #fb7185; /* rose-400 */
+            --button-purple: #818cf8; /* indigo-300 */
+            --button-green: #34d399; /* emerald-400 */
+            --button-blue: #6366f1; /* indigo-500 */
+            --button-pink-hover: #f43f5e; /* rose-500 */
+            --button-purple-hover: #4f46e5; /* indigo-600 */
+            --button-green-hover: #059669; /* emerald-600 */
+            --button-blue-hover: #4338ca; /* indigo-700 */
+            --scrollbar-thumb: rgba(129, 140, 248, 0.4); /* indigo-300 with opacity */
+            --scrollbar-thumb-hover: rgba(129, 140, 248, 0.6);
+        }
+
+        /* Ocean Theme (kept for reference, not directly used by toggle) */
+        body.ocean-theme {
+            --bg-color-from: #e0f2f7; /* light blue */
+            --bg-color-to: #b3e5fc; /* lighter blue */
+            --text-color: #212121;
+            --nav-bg: rgba(179, 229, 252, 0.9);
+            --card-bg: rgba(224, 242, 241, 0.95);
+            --border-color: #a7d9e4;
+            --main-gradient-from: #00bcd4; /* cyan-500 */
+            --main-gradient-to: #0097a7; /* cyan-700 */
+            --button-pink: #f06292; /* pink-300 */
+            --button-purple: #4fc3f7; /* lightblue-300 */
+            --button-green: #81c784; /* lightgreen-300 */
+            --button-blue: #29b6f6; /* lightblue-400 */
+            --button-pink-hover: #e91e63; /* pink-500 */
+            --button-purple-hover: #03a9f4; /* lightblue-500 */
+            --button-green-hover: #4caf50; /* green-500 */
+            --button-blue-hover: #0288d1; /* lightblue-700 */
+            --scrollbar-thumb: rgba(0, 188, 212, 0.4);
+            --scrollbar-thumb-hover: rgba(0, 188, 212, 0.6);
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            /* Softer, more paper-like background */
-            background: linear-gradient(to bottom right, #f8f8f8, #f0f0f0);
+            background: linear-gradient(to bottom right, var(--bg-color-from), var(--bg-color-to));
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* Align content from the top */
+            justify-content: flex-start;
             padding-top: 1rem;
-            color: #333; /* Slightly darker text for better contrast on light background */
+            color: var(--text-color); /* Use CSS variable for dynamic text color */
         }
 
         /* Custom Scrollbar for confessions list and replies */
@@ -35,11 +100,11 @@
             background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(139, 92, 246, 0.4); /* Softer purple for scrollbar */
+            background: var(--scrollbar-thumb);
             border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(139, 92, 246, 0.6);
+            background: var(--scrollbar-thumb-hover);
         }
 
         /* Animations */
@@ -58,25 +123,30 @@
             animation: modal-in 0.3s ease-out forwards;
         }
 
-        /* General Modal Styling (initially hidden) */
+        /* General Modal Styling */
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.5); /* Slightly softer overlay */
-            display: flex;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex; /* Always flex, but hidden-modal will override to none */
             align-items: center;
             justify-content: center;
             padding: 1rem;
-            z-index: 50;
-            backdrop-filter: blur(4px); /* Slightly less blur */
+            z-index: 50; /* Ensure it's above other content */
+            backdrop-filter: blur(4px);
         }
+        /* Crucial rule to hide modals by default */
+        .hidden-modal {
+            display: none; /* This overrides display:flex from modal-overlay */
+        }
+
         .modal-container {
-            background: rgba(255, 255, 255, 0.95); /* More opaque white for modals */
-            backdrop-filter: blur(15px); /* Reduced blur for subtle effect */
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
             padding: 2rem;
             border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Softer shadow */
-            border: 1px solid rgba(240, 240, 240, 0.8); /* Very subtle border */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(240, 240, 240, 0.8);
             width: 100%;
             max-width: 32rem;
             position: relative;
@@ -93,23 +163,58 @@
         .modal-container.search-modal {
             max-width: 32rem;
         }
-        .modal-container.info-modal {
+        .modal-container.info-modal,
+        .modal-container.about-modal { /* Added .about-modal */
             max-width: 24rem;
             text-align: center;
         }
         .modal-container.notes-modal,
-        .modal-container.report-modal { /* Added for notes modal and report modal */
+        .modal-container.report-modal {
             max-width: 28rem;
             min-height: 200px;
         }
 
-        /* Utility classes for hiding/showing modals */
-        .hidden-modal {
-            display: none;
+        /* Styling for dynamic CSS variables */
+        .bg-white\/90 { background-color: var(--nav-bg); }
+        .bg-white\/95 { background-color: var(--card-bg); }
+        .border-gray-100 { border-color: var(--border-color); }
+        
+        .bg-gradient-to-r.from-purple-600 { background-image: linear-gradient(to right, var(--main-gradient-from), var(--main-gradient-to)); }
+        .bg-gradient-to-r.from-purple-500 { background-image: linear-gradient(to right, var(--main-gradient-from), var(--main-gradient-to)); }
+
+        .bg-pink-400 { background-color: var(--button-pink); }
+        .hover\:bg-pink-500:hover { background-color: var(--button-pink-hover); }
+        .bg-indigo-400 { background-color: var(--button-purple); }
+        .hover\:bg-indigo-500:hover { background-color: var(--button-purple-hover); }
+        .bg-green-400 { background-color: var(--button-green); }
+        .hover\:bg-green-500:hover { background-color: var(--button-green-hover); }
+        .bg-blue-400 { background-color: var(--button-blue); }
+        .hover\:bg-blue-500:hover { background-color: var(--button-blue-hover); }
+
+        /* Toast Message Styling */
+        #toast-notification {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
         }
+        #toast-notification.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
     </style>
 </head>
-<body class="min-h-screen p-4 font-inter text-gray-800 flex flex-col items-center justify-between">
+<body class="min-h-screen p-4 font-inter flex flex-col items-center justify-between">
 
     <!-- Loading Spinner -->
     <div id="loading-spinner" class="fixed inset-0 bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 flex flex-col items-center justify-center z-[200] space-y-4">
@@ -139,6 +244,15 @@
             <button id="view-my-confessions-btn" class="p-2 rounded-full shadow-sm transition duration-300 ease-in-out transform bg-blue-400 hover:bg-blue-500 text-white hover:scale-105" title="Show My Confessions">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             </button>
+        </div>
+
+        <!-- Theme Toggle Switch -->
+        <div class="flex items-center space-x-2">
+            <span id="light-theme-label" class="text-gray-700 text-sm">Light</span>
+            <button id="theme-toggle-btn" class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 bg-gray-200">
+                <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200 translate-x-0"></span>
+            </button>
+            <span id="dark-theme-label" class="text-gray-700 text-sm">Dark</span>
         </div>
     </nav>
 
@@ -247,7 +361,7 @@
         </div>
     </div>
 
-    <!-- Notes Modal (New) -->
+    <!-- Notes Modal -->
     <div id="notes-modal" class="modal-overlay hidden-modal">
         <div class="modal-container notes-modal">
             <button id="close-notes-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition">
@@ -264,7 +378,7 @@
         </div>
     </div>
 
-    <!-- Report Modal (New) -->
+    <!-- Report Modal -->
     <div id="report-modal" class="modal-overlay hidden-modal">
         <div class="modal-container report-modal">
             <button id="close-report-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition">
@@ -297,12 +411,40 @@
         </div>
     </div>
 
+    <!-- About Modal (New) -->
+    <div id="about-modal" class="modal-overlay hidden-modal">
+        <div class="modal-container about-modal">
+            <button id="close-about-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 text-center">About The Crush Board</h2>
+            <p class="text-gray-700 mb-4 text-center">
+                The Crush Board is a fun, anonymous platform to share your secret crushes and read what others are feeling!
+                It's a place for lighthearted confessions and connection.
+            </p>
+            <p class="text-gray-600 text-sm italic mb-6">
+                Built with ❤️ and Firebase by AVSC for the projectbeta webdev bootcamp.
+            </p>
+            <button id="about-ok-btn" class="w-full py-2 px-4 rounded-full font-bold text-white shadow-md transform transition duration-300 ease-in-out bg-purple-500 hover:bg-purple-600 hover:scale-[1.02]">
+                Got It!
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="">
+        <span id="toast-message"></span>
+    </div>
 
     <!-- Info/Error Modal -->
     <div id="info-modal" class="modal-overlay hidden-modal">
         <div class="modal-container info-modal">
             <p id="info-modal-message" class="text-gray-800 text-xl font-semibold mb-6"></p>
-            <button id="close-info-modal-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105">Close</button>
+            <div class="flex justify-center space-x-4">
+                <button id="close-info-modal-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105">Close</button>
+                <button id="info-modal-confirm-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105 hidden">Confirm</button>
+            </div>
         </div>
     </div>
 
@@ -310,13 +452,14 @@
     <footer class="w-full max-w-3xl bg-white/90 backdrop-blur-lg p-3 rounded-xl shadow-md mt-8 flex flex-col items-center justify-center text-gray-700 text-sm border border-gray-100">
         <p class="mb-1">©️ AVSC 2025 | Built for projectbeta webdev bootcamp</p>
         <p>Powered by ASTRA, Hackclub and the music of love</p>
+        <button id="open-about-modal-footer-btn" class="text-blue-500 hover:underline mt-2 text-xs">About This Site</button>
     </footer>
 
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, orderBy, doc, setDoc, increment } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, orderBy, doc, setDoc, increment, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
         // --- Configuration ---
         const firebaseConfig = {
@@ -338,22 +481,24 @@
         let recentConfessions = [];
         let archivedConfessions = [];
         let filteredConfessions = [];
-        let currentView = 'recent';
+        let currentView = 'recent'; // 'recent', 'archive', 'popular', 'my'
         let searchTerm = '';
         let searchCategory = 'text';
         let sharedConfessionId = null;
         let currentConfessionToReplyTo = null;
-        let currentConfessionToReport = null; // New state for reporting
+        let currentConfessionToReport = null;
+        let currentConfessionToDelete = null; // New for delete functionality
         let isPosting = false;
         let isReplying = false;
         let isReporting = false;
+        let isDeleting = false; // New for delete functionality
 
         // --- DOM Elements ---
         const loadingSpinner = document.getElementById('loading-spinner');
-        const userIdDisplayContainer = document.getElementById('user-id-display-container'); // Changed from userIdDisplay
-        const userIdSpan = document.getElementById('user-id-display'); // Kept for the span inside
-        const copyUserIdBtn = document.getElementById('copy-user-id-btn'); // New
-        const userIdCopiedMessage = document.getElementById('user-id-copied-message'); // New
+        const userIdDisplayContainer = document.getElementById('user-id-display-container');
+        const userIdSpan = document.getElementById('user-id-display');
+        const copyUserIdBtn = document.getElementById('copy-user-id-btn');
+        const userIdCopiedMessage = document.getElementById('user-id-copied-message');
         const clearSharedConfessionBtn = document.getElementById('clear-shared-confession-btn');
 
         const openFormModalBtn = document.getElementById('open-form-modal-btn');
@@ -386,15 +531,25 @@
         const notesContent = document.getElementById('notes-content');
         const notesOkBtn = document.getElementById('notes-ok-btn');
 
-        const reportModal = document.getElementById('report-modal'); // New
-        const closeReportModalBtn = document.getElementById('close-report-modal-btn'); // New
-        const reportReasonRadios = document.querySelectorAll('input[name="reportReason"]'); // New
-        const reportDetailsInput = document.getElementById('report-details-input'); // New
-        const submitReportBtn = document.getElementById('submit-report-btn'); // New
+        const reportModal = document.getElementById('report-modal');
+        const closeReportModalBtn = document.getElementById('close-report-modal-btn');
+        const reportReasonRadios = document.querySelectorAll('input[name="reportReason"]');
+        const reportDetailsInput = document.getElementById('report-details-input');
+        const submitReportBtn = document.getElementById('submit-report-btn');
+
+        const aboutModal = document.getElementById('about-modal'); // New About modal
+        const closeAboutModalBtn = document.getElementById('close-about-modal-btn'); // New
+        const aboutOkBtn = document.getElementById('about-ok-btn'); // New
+        const openAboutModalFooterBtn = document.getElementById('open-about-modal-footer-btn'); // New button in footer
+
+        const toastNotification = document.getElementById('toast-notification');
+        const toastMessage = document.getElementById('toast-message');
 
         const infoModal = document.getElementById('info-modal');
         const infoModalMessage = document.getElementById('info-modal-message');
         const closeInfoModalBtn = document.getElementById('close-info-modal-btn');
+        // Get the new confirm button
+        const infoModalConfirmBtn = document.getElementById('info-modal-confirm-btn'); 
 
         const confessionsListTitle = document.getElementById('confessions-list-title');
         const confessionsContainer = document.getElementById('confessions-container');
@@ -403,7 +558,13 @@
         const viewRecentBtn = document.getElementById('view-recent-btn');
         const viewArchiveBtn = document.getElementById('view-archive-btn');
         const viewPopularBtn = document.getElementById('view-popular-btn');
-        const viewMyConfessionsBtn = document.getElementById('view-my-confessions-btn'); // New
+        const viewMyConfessionsBtn = document.getElementById('view-my-confessions-btn');
+
+        // Theme Toggle Elements
+        const themeToggleButton = document.getElementById('theme-toggle-btn');
+        const themeToggleKnob = themeToggleButton.firstElementChild; // The inner span for the knob
+        const lightThemeLabel = document.getElementById('light-theme-label');
+        const darkThemeLabel = document.getElementById('dark-theme-label');
 
         // --- SVG Icons ---
         function getHeartIconSvg(filled, className = "") {
@@ -428,9 +589,21 @@
             return `<svg class="w-5 h-5 text-gray-600 hover:text-green-700 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
         }
 
-        function getReportIconSvg() { // New report icon
+        function getReportIconSvg() {
             return `<svg class="w-5 h-5 text-gray-600 hover:text-red-700 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
         }
+        function getDeleteIconSvg() { // New delete icon SVG
+            return `<svg class="w-5 h-5 text-gray-600 hover:text-red-700 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
+        }
+
+        function getTwitterIconSvg() {
+            return `<svg class="w-5 h-5 text-blue-400 hover:text-blue-600 cursor-pointer" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.46 6c-.77.34-1.6.56-2.46.66.89-.53 1.57-1.37 1.89-2.37-.83.49-1.75.85-2.73 1.04C18.3 4.63 17.18 4 15.91 4c-2.36 0-4.28 1.9-4.28 4.25 0 .33.04.66.11.97-3.56-.18-6.72-1.87-8.83-4.43-.37.64-.58 1.39-.58 2.19 0 1.47.75 2.76 1.89 3.53-.7-.02-1.35-.21-1.92-.53v.05c0 2.05 1.46 3.76 3.39 4.15-.36.1-.73.15-1.12.15-.27 0-.53-.02-.79-.08.54 1.67 2.11 2.9 3.97 2.94-1.45 1.13-3.28 1.8-5.28 1.8-.34 0-.68-.02-1.02-.06 1.87 1.2 4.09 1.9 6.49 1.9 7.79 0 12.04-6.38 12.04-11.96 0-.18-.01-.37-.01-.55.83-.6 1.55-1.35 2.11-2.2Z"/></svg>`;
+        }
+
+        function getFacebookIconSvg() {
+            return `<svg class="w-5 h-5 text-blue-600 hover:text-blue-800 cursor-pointer" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.996c0-.495.701-.504.996-.504h2.004v-3.488h-2.484c-2.978 0-3.516 2.086-3.516 3.488v2.004z"/></svg>`;
+        }
+
 
         // --- Utility Functions ---
         function showLoadingSpinner() {
@@ -441,13 +614,36 @@
             loadingSpinner.classList.add('hidden');
         }
 
-        function showInfoModal(message) {
-            infoModalMessage.textContent = message;
+        function showInfoModal(message, isConfirm = false, onConfirm = null) {
+            infoModalMessage.innerHTML = message; // Use innerHTML for potential links/formatting
             infoModal.classList.remove('hidden-modal');
+            
+            // Access the buttons by their variables (already declared globally)
+            if (isConfirm) {
+                infoModalConfirmBtn.classList.remove('hidden');
+                infoModalConfirmBtn.onclick = () => {
+                    closeInfoModal(); // Close info modal first
+                    if (onConfirm) onConfirm(); // Then execute the callback
+                };
+                closeInfoModalBtn.textContent = 'Cancel'; // Change 'Close' to 'Cancel' for confirmation dialog
+            } else {
+                infoModalConfirmBtn.classList.add('hidden');
+                infoModalConfirmBtn.onclick = null; // Clear any previous click handler
+                closeInfoModalBtn.textContent = 'Close'; // Ensure it's 'Close' for regular info modals
+            }
         }
 
         function closeInfoModal() {
             infoModal.classList.add('hidden-modal');
+            infoModalConfirmBtn.onclick = null; // Always clear confirm button handler when closing
+        }
+
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toastNotification.classList.add('show');
+            setTimeout(() => {
+                toastNotification.classList.remove('show');
+            }, 3000); // Toast disappears after 3 seconds
         }
 
         function formatTimestamp(ts) {
@@ -466,7 +662,6 @@
             modalElement.classList.add('hidden-modal');
         }
 
-        // Updates the text and styling of the search clear button
         function updateClearSearchButtonText() {
             if (searchTerm.trim() !== '') {
                 clearSearchBtn.textContent = 'View Results';
@@ -479,12 +674,40 @@
             }
         }
 
+        // --- Theme Management ---
+        function applyTheme(themeName) {
+            document.body.classList.remove('dark-theme'); // Only dark-theme class matters for toggle
+            if (themeName === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggleButton.classList.remove('bg-gray-200');
+                themeToggleButton.classList.add('bg-indigo-600');
+                themeToggleKnob.classList.remove('translate-x-0');
+                themeToggleKnob.classList.add('translate-x-5');
+                lightThemeLabel.classList.remove('text-purple-700');
+                darkThemeLabel.classList.add('text-purple-700');
+            } else { // Light theme
+                themeToggleButton.classList.remove('bg-indigo-600');
+                themeToggleButton.classList.add('bg-gray-200');
+                themeToggleKnob.classList.remove('translate-x-5');
+                themeToggleKnob.classList.add('translate-x-0');
+                lightThemeLabel.classList.add('text-purple-700');
+                darkThemeLabel.classList.remove('text-purple-700');
+            }
+            localStorage.setItem('theme', themeName); // Save theme preference
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light'; // Default to light
+            applyTheme(savedTheme);
+        }
+
         // --- Main App Logic ---
 
         // Initialize Firebase
         async function initializeFirebase() {
             try {
                 showLoadingSpinner();
+                loadTheme(); // Load theme preference on startup
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 const authInstance = getAuth(app);
@@ -497,7 +720,7 @@
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
 
-                // Authenticate user
+                // Authenticate user anonymously if not already signed in
                 onAuthStateChanged(authInstance, async (user) => {
                     if (user) {
                         userId = user.uid;
@@ -509,7 +732,7 @@
                         } catch (error) {
                             console.error("Authentication Error:", error);
                             if (error.code === 'auth/configuration-not-found') {
-                                showInfoModal(`Authentication failed: Firebase project configuration not found for authentication. Please ensure:
+                                showInfoModal(`Authentication failed: Firebase project configuration not found. Please check:
                                 1. Your Firebase project ID in firebaseConfig is correct.
                                 2. "Anonymous" sign-in method is enabled in Firebase Authentication -> Sign-in method tab.`);
                             } else {
@@ -518,7 +741,7 @@
                         }
                     }
                     if (db && userId) {
-                        setupConfessionsListener();
+                        setupConfessionsListener(); // Start listening for data once Firebase is ready
                     }
                     hideLoadingSpinner();
                 });
@@ -558,15 +781,22 @@
                     </div>
 
                     <div class="flex items-center space-x-2">
-                        <button class="share-btn p-1 rounded-full bg-white shadow-sm hover:bg-gray-50 transition duration-200" title="Share this confession" data-confession-id="${confession.id}">
+                        <button class="share-btn p-1 rounded-full bg-white shadow-sm hover:bg-gray-50 transition duration-200" title="Copy share link" data-confession-id="${confession.id}">
                             ${getShareIconSvg()}
                         </button>
                         <span class="copied-message text-xs text-green-700 bg-green-100 rounded-full px-2 py-1 animate-fade-in-up hidden">Copied!</span>
 
+                        <button class="twitter-share-btn p-1 rounded-full bg-white shadow-sm hover:bg-gray-50 transition duration-200" title="Share on Twitter" data-confession-id="${confession.id}">
+                            ${getTwitterIconSvg()}
+                        </button>
+                        <button class="facebook-share-btn p-1 rounded-full bg-white shadow-sm hover:bg-gray-50 transition duration-200" title="Share on Facebook" data-confession-id="${confession.id}">
+                            ${getFacebookIconSvg()}
+                        </button>
+
                         <button class="reply-btn p-1 rounded-full bg-white shadow-sm hover:bg-gray-50 transition duration-200" title="Reply to this confession" data-confession-id="${confession.id}">
                             ${getReplyIconSvg()}
                         </button>
-                        ${confession.notes ? `
+                        ${confession.notes && confession.notes.trim() !== '' ? `
                             <button class="notes-btn p-1 rounded-full bg-white shadow-sm hover:bg-gray-50 transition duration-200" title="View notes" data-confession-id="${confession.id}">
                                 ${getNotesIconSvg()}
                             </button>
@@ -574,10 +804,16 @@
                         <button class="report-btn p-1 rounded-full bg-white shadow-sm hover:bg-gray-50 transition duration-200" title="Report this confession" data-confession-id="${confession.id}">
                             ${getReportIconSvg()}
                         </button>
+                        ${currentView === 'my' && confession.userId === userId ? `
+                            <button class="delete-btn p-1 rounded-full bg-white shadow-sm hover:bg-gray-50 transition duration-200" title="Delete this confession" data-confession-id="${confession.id}">
+                                ${getDeleteIconSvg()}
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             `;
 
+            // Attach event listeners to the dynamically created buttons
             card.querySelector('.like-btn').addEventListener('click', (e) => {
                 const confessionId = e.currentTarget.dataset.confessionId;
                 const likedStatus = e.currentTarget.dataset.liked === 'true';
@@ -589,6 +825,15 @@
                 handleShareConfession(confessionId, e.currentTarget.nextElementSibling);
             });
 
+            card.querySelector('.twitter-share-btn').addEventListener('click', (e) => {
+                const confessionId = e.currentTarget.dataset.confessionId;
+                handleTwitterShare(confessionId);
+            });
+            card.querySelector('.facebook-share-btn').addEventListener('click', (e) => {
+                const confessionId = e.currentTarget.dataset.confessionId;
+                handleFacebookShare(confessionId);
+            });
+
             card.querySelector('.reply-btn').addEventListener('click', (e) => {
                 const confessionId = e.currentTarget.dataset.confessionId;
                 const confessionToReply = allConfessions.find(c => c.id === confessionId);
@@ -598,7 +843,7 @@
             });
 
             const notesBtn = card.querySelector('.notes-btn');
-            if (notesBtn) {
+            if (notesBtn) { // Only add listener if the button exists (i.e., if notes are present)
                 notesBtn.addEventListener('click', (e) => {
                     const confessionId = e.currentTarget.dataset.confessionId;
                     const confessionWithNotes = allConfessions.find(c => c.id === confessionId);
@@ -608,9 +853,8 @@
                 });
             }
 
-            // Add event listener for the new report button
             const reportBtn = card.querySelector('.report-btn');
-            if (reportBtn) {
+            if (reportBtn) { // Only add listener if the button exists
                 reportBtn.addEventListener('click', (e) => {
                     const confessionId = e.currentTarget.dataset.confessionId;
                     currentConfessionToReport = allConfessions.find(c => c.id === confessionId);
@@ -620,12 +864,24 @@
                 });
             }
 
+            // New: Delete button event listener
+            const deleteBtn = card.querySelector('.delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    const confessionId = e.currentTarget.dataset.confessionId;
+                    currentConfessionToDelete = allConfessions.find(c => c.id === confessionId);
+                    if (currentConfessionToDelete) {
+                        showInfoModal(`Are you sure you want to delete your confession to <strong>${currentConfessionToDelete.crushName}</strong>? This action cannot be undone.`, true, () => handleDeleteConfession(currentConfessionToDelete.id));
+                    }
+                });
+            }
+
             return card;
         }
 
         // Function to render the list of confessions
         function renderConfessionsList() {
-            confessionsContainer.innerHTML = '';
+            confessionsContainer.innerHTML = ''; // Clear existing confessions
             if (filteredConfessions.length === 0) {
                 noConfessionsMessage.classList.remove('hidden');
             } else {
@@ -634,10 +890,10 @@
                     confessionsContainer.appendChild(renderConfessionCard(confession));
                 });
             }
-            confessionsContainer.appendChild(document.createElement('div'));
-            confessionsContainer.lastChild.id = 'confessions-end-ref';
+            // Add a reference div at the end for scrolling to
+            confessionsContainer.appendChild(document.createElement('div')).id = 'confessions-end-ref';
             
-            // Update title
+            // Update title based on current view/filter
             if (sharedConfessionId) {
                 confessionsListTitle.textContent = "Shared Confession";
                 clearSharedConfessionBtn.classList.remove('hidden');
@@ -654,7 +910,7 @@
             } else if (currentView === 'popular') {
                 confessionsListTitle.textContent = "Popular Confessions";
                 clearSharedConfessionBtn.classList.add('hidden');
-            } else if (currentView === 'my') { // New: My Confessions title
+            } else if (currentView === 'my') {
                 confessionsListTitle.textContent = "My Confessions";
                 clearSharedConfessionBtn.classList.add('hidden');
             }
@@ -662,17 +918,17 @@
 
         // Filter and sort confessions based on current view and search
         function applyFiltersAndSort() {
-            let confessionsToProcess = [...allConfessions];
+            let confessionsToProcess = [...allConfessions]; // Start with a copy of all confessions
 
-            // 1. Handle shared confession ID (highest priority, overrides all others)
+            // Priority 1: If a specific shared confession ID is active, show only that
             if (sharedConfessionId) {
                 const foundConfession = confessionsToProcess.find(c => c.id === sharedConfessionId);
                 filteredConfessions = foundConfession ? [foundConfession] : [];
-                renderConfessionsList();
-                return;
+                renderConfessionsList(); // Re-render with the single shared confession
+                return; // Exit early as other filters/sorts don't apply
             }
 
-            // 2. Apply search term filter (if active)
+            // Priority 2: Apply search term filter if active
             if (searchTerm) {
                 const lowerCaseSearchTerm = searchTerm.toLowerCase();
                 confessionsToProcess = confessionsToProcess.filter(confession => {
@@ -695,7 +951,7 @@
                 });
             }
 
-            // 3. Apply current view filter (only if no search term is active)
+            // Priority 3: Apply current view filter/sort if no search term is active
             if (!searchTerm) {
                 if (currentView === 'recent') {
                     const oneWeekAgo = new Date();
@@ -704,6 +960,7 @@
                         const confessionDate = confession.timestamp?.toDate ? confession.timestamp.toDate() : new Date(0);
                         return confessionDate > oneWeekAgo;
                     });
+                    // Sort recent confessions by newest first
                     confessionsToProcess.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
                 } else if (currentView === 'archive') {
                     const oneWeekAgo = new Date();
@@ -712,49 +969,70 @@
                         const confessionDate = confession.timestamp?.toDate ? confession.timestamp.toDate() : new Date(0);
                         return confessionDate <= oneWeekAgo;
                     });
+                    // Sort archived confessions by newest first among themselves
                     confessionsToProcess.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
                 } else if (currentView === 'popular') {
+                    // Sort by likes (descending), then by newest as a tie-breaker
                     confessionsToProcess.sort((a, b) => {
                         const likesDiff = (b.likesCount || 0) - (a.likesCount || 0);
                         if (likesDiff !== 0) return likesDiff;
                         return (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0);
                     });
-                } else if (currentView === 'my') { // New: Filter for user's own confessions
+                } else if (currentView === 'my') {
+                    // Filter for the current user's own confessions
                     confessionsToProcess = confessionsToProcess.filter(confession => confession.userId === userId);
+                    // Sort by newest first
                     confessionsToProcess.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
                 }
-            } else { // If a search term is active, sort by newest for consistent results
+            } else {
+                // If a search term is active, always sort results by newest for consistency
                 confessionsToProcess.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
             }
 
             filteredConfessions = confessionsToProcess;
-            renderConfessionsList();
+            renderConfessionsList(); // Re-render the list after applying all filters and sorts
         }
 
         // Sets up a real-time listener for confessions data from Firestore
         let unsubscribeConfessions = null;
         function setupConfessionsListener() {
             if (unsubscribeConfessions) {
-                unsubscribeConfessions(); // Detach existing listener
+                unsubscribeConfessions(); // Detach existing listener to avoid duplicates
             }
             const publicCollectionPath = `artifacts/${APP_ID}/public/data/crush_board`;
             const q = query(collection(db, publicCollectionPath));
 
             unsubscribeConfessions = onSnapshot(q, (snapshot) => {
+                const oldConfessionsMap = new Map(allConfessions.map(c => [c.id, c])); // Capture current state for comparison
+
                 let fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                // Ensure likesCount and likedBy are properly initialized
+                // Ensure default values for new fields or when data is missing
                 fetched = fetched.map(conf => ({
                     ...conf,
                     likesCount: typeof conf.likesCount === 'number' ? conf.likesCount : 0,
                     likedBy: typeof conf.likedBy === 'object' && conf.likedBy !== null ? conf.likedBy : {},
-                    notes: typeof conf.notes === 'string' ? conf.notes : ''
+                    notes: typeof conf.notes === 'string' ? conf.notes : '', // Ensure notes is a string, default to empty
+                    replyCount: typeof conf.replyCount === 'number' ? conf.replyCount : 0 // Initialize replyCount
                 }));
 
-                // Keep allConfessions sorted by newest first for consistent base
+                // Check for new replies to user's own confessions and show toast notification
+                fetched.forEach(newConf => {
+                    const oldConf = oldConfessionsMap.get(newConf.id);
+                    if (newConf.userId === userId && oldConf) { // Check only for confessions belonging to the current user
+                        const oldReplyCount = oldConf.replyCount || 0; // Use replyCount for more robust check
+                        const newReplyCount = newConf.replyCount || 0;
+                        
+                        if (newReplyCount > oldReplyCount) {
+                            showToast(`Someone replied to your confession to ${newConf.crushName}!`);
+                        }
+                    }
+                });
+
+                // Update global confessions array and re-sort
                 allConfessions = fetched.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
 
-                // Re-categorize confessions based on updated data
+                // Recalculate recent and archived lists based on updated allConfessions
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
                 recentConfessions = allConfessions.filter(confession => {
@@ -766,9 +1044,9 @@
                     return confessionDate <= oneWeekAgo;
                 });
 
-                applyFiltersAndSort(); // Re-render with new data
+                applyFiltersAndSort(); // Re-render the UI with the latest data
                 updateClearSearchButtonText(); // Update search button text if needed
-                hideLoadingSpinner();
+                hideLoadingSpinner(); // Hide loading spinner once data is loaded
             }, (error) => {
                 console.error("Failed to fetch confessions:", error);
                 showInfoModal(`Failed to load confessions: ${error.message}`);
@@ -778,35 +1056,46 @@
 
         // --- Event Handlers ---
 
-        // Confession Form Modal
+        // Theme switching event listener (delegated to the button)
+        themeToggleButton.addEventListener('click', () => {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+        });
+
+        // Event listeners for opening and closing the Confession Form Modal
         openFormModalBtn.addEventListener('click', () => {
+            // Clear input fields when opening the form
             messageInput.value = '';
             crushNameInput.value = '';
             socialMediaInput.value = '';
             notesInput.value = '';
-            showModal(confessionFormModal);
+            showModal(confessionFormModal); // Show the modal
         });
-        closeFormModalBtn.addEventListener('click', () => hideModal(confessionFormModal));
+        closeFormModalBtn.addEventListener('click', () => hideModal(confessionFormModal)); // Close via X button
         confessionFormModal.addEventListener('click', (e) => {
-            if (e.target === confessionFormModal) hideModal(confessionFormModal);
+            if (e.target === confessionFormModal) hideModal(confessionFormModal); // Close when clicking outside modal content
         });
 
-        // Post Confession
+        // Event listener for posting a new confession
         postConfessionBtn.addEventListener('click', async () => {
             const message = messageInput.value.trim();
             const crushName = crushNameInput.value.trim();
             const socialMedia = socialMediaInput.value.trim();
             const notes = notesInput.value.trim();
 
+            // Basic input validation
             if (!message || !crushName) {
                 showInfoModal("Please enter a message and your crush's name.");
                 return;
             }
+            // Ensure Firebase is initialized and user is authenticated
             if (!db || !userId) {
                 showInfoModal("Cannot post: Application not fully connected. Please refresh the page.");
                 return;
             }
 
+            // Set loading state for the button
             isPosting = true;
             postConfessionBtn.textContent = 'Posting...';
             postConfessionBtn.disabled = true;
@@ -819,18 +1108,20 @@
                     message: message,
                     crushName: crushName,
                     socialMedia: socialMedia,
-                    notes: notes,
-                    timestamp: serverTimestamp(),
+                    notes: notes, // Save notes field to Firestore
+                    timestamp: serverTimestamp(), // Use server timestamp for consistency
                     userId: userId,
                     likesCount: 0,
-                    likedBy: {}
+                    likedBy: {}, // Map to track users who liked
+                    replyCount: 0 // Initialize reply count for the confession
                 });
-                hideModal(confessionFormModal);
-                showInfoModal("Your confession has been posted successfully!");
+                hideModal(confessionFormModal); // Close the form modal
+                showInfoModal("Your confession has been posted successfully!"); // Show success message
             } catch (error) {
                 console.error("Error posting confession:", error);
-                showInfoModal(`Failed to post your confession: ${error.message}.`);
+                showInfoModal(`Failed to post your confession: ${error.message}.`); // Show error message
             } finally {
+                // Reset button state
                 isPosting = false;
                 postConfessionBtn.textContent = 'Post My Confession';
                 postConfessionBtn.disabled = false;
@@ -839,21 +1130,22 @@
             }
         });
 
-        // Search Modal
+        // Event listeners for Search Modal
         openSearchBtn.addEventListener('click', () => {
-            searchTermInput.value = searchTerm;
-            searchCategorySelect.value = searchCategory;
-            updateClearSearchButtonText();
-            showModal(searchModal);
+            searchTermInput.value = searchTerm; // Restore previous search term
+            searchCategorySelect.value = searchCategory; // Restore previous search category
+            updateClearSearchButtonText(); // Update button text based on current search state
+            showModal(searchModal); // Show the search modal
         });
-        closeSearchModalBtn.addEventListener('click', () => hideModal(searchModal));
+        closeSearchModalBtn.addEventListener('click', () => hideModal(searchModal)); // Close via X button
         searchModal.addEventListener('click', (e) => {
-            if (e.target === searchModal) hideModal(searchModal);
+            if (e.target === searchModal) hideModal(searchModal); // Close when clicking outside modal content
         });
 
+        // Handle search input changes
         searchTermInput.addEventListener('input', () => {
             searchTerm = searchTermInput.value;
-            applyFiltersAndSort();
+            applyFiltersAndSort(); // Re-filter and re-sort confessions
             updateClearSearchButtonText();
         });
         searchCategorySelect.addEventListener('change', () => {
@@ -861,10 +1153,13 @@
             applyFiltersAndSort();
             updateClearSearchButtonText();
         });
+        // Clear Search button functionality
         clearSearchBtn.addEventListener('click', () => {
             if (searchTerm.trim() !== '') {
+                // If there's an active search, clicking 'View Results' just closes the modal
                 hideModal(searchModal);
             } else {
+                // If no active search, 'Clear Search' button clears input and state, then re-filters
                 searchTermInput.value = '';
                 searchTerm = '';
                 applyFiltersAndSort();
@@ -873,19 +1168,19 @@
             updateClearSearchButtonText();
         });
 
-        // Info Modal
-        closeInfoModalBtn.addEventListener('click', closeInfoModal);
+        // Event listeners for Info/Error Modal
+        closeInfoModalBtn.addEventListener('click', closeInfoModal); // Close via Close button
         infoModal.addEventListener('click', (e) => {
-            if (e.target === infoModal) closeInfoModal();
+            if (e.target === infoModal) closeInfoModal(); // Close when clicking outside modal content
         });
 
-        // View Buttons
+        // Event listeners for View Navigation Buttons
         viewRecentBtn.addEventListener('click', () => {
             currentView = 'recent';
-            searchTerm = '';
+            searchTerm = ''; // Clear search when changing view
             searchTermInput.value = '';
-            updateViewButtons();
-            applyFiltersAndSort();
+            updateViewButtons(); // Update active button styling
+            applyFiltersAndSort(); // Re-filter and re-sort
             updateClearSearchButtonText();
         });
         viewArchiveBtn.addEventListener('click', () => {
@@ -904,7 +1199,7 @@
             applyFiltersAndSort();
             updateClearSearchButtonText();
         });
-        viewMyConfessionsBtn.addEventListener('click', () => { // New: My Confessions button handler
+        viewMyConfessionsBtn.addEventListener('click', () => {
             currentView = 'my';
             searchTerm = '';
             searchTermInput.value = '';
@@ -913,6 +1208,7 @@
             updateClearSearchButtonText();
         });
 
+        // Function to update the active styling of the view buttons
         function updateViewButtons() {
             // Reset all buttons to default state
             viewRecentBtn.classList.remove('bg-pink-500');
@@ -921,8 +1217,8 @@
             viewArchiveBtn.classList.add('bg-indigo-400', 'hover:bg-indigo-500');
             viewPopularBtn.classList.remove('bg-green-500');
             viewPopularBtn.classList.add('bg-green-400', 'hover:bg-green-500');
-            viewMyConfessionsBtn.classList.remove('bg-blue-500'); // New
-            viewMyConfessionsBtn.classList.add('bg-blue-400', 'hover:bg-blue-500'); // New
+            viewMyConfessionsBtn.classList.remove('bg-blue-500');
+            viewMyConfessionsBtn.classList.add('bg-blue-400', 'hover:bg-blue-500');
 
             // Set active state for the current view
             if (currentView === 'recent') {
@@ -934,21 +1230,22 @@
             } else if (currentView === 'popular') {
                 viewPopularBtn.classList.add('bg-green-500');
                 viewPopularBtn.classList.remove('bg-green-400', 'hover:bg-green-500');
-            } else if (currentView === 'my') { // New
+            } else if (currentView === 'my') {
                 viewMyConfessionsBtn.classList.add('bg-blue-500');
                 viewMyConfessionsBtn.classList.remove('bg-blue-400', 'hover:bg-blue-500');
             }
         }
 
-        // Shared Confession Clear Button
+        // Event listener for the "View All" button when a shared confession is active
         clearSharedConfessionBtn.addEventListener('click', () => {
-            sharedConfessionId = null;
-            window.history.replaceState({}, document.title, window.location.pathname);
-            applyFiltersAndSort();
+            sharedConfessionId = null; // Clear the shared confession ID
+            window.history.replaceState({}, document.title, window.location.pathname); // Clean up URL
+            applyFiltersAndSort(); // Re-render to show all confessions based on current view
         });
 
-        // --- Confession Actions ---
+        // --- Confession Actions (Like, Share, Reply, Notes, Report, Delete) ---
 
+        // Handle toggling likes on a confession
         async function handleToggleLike(confessionId, currentlyLiked) {
             if (!db || !userId) {
                 showInfoModal("Cannot like/unlike: You must be signed in.");
@@ -959,11 +1256,13 @@
 
             try {
                 if (currentlyLiked) {
+                    // Decrement likes and set user's like status to false
                     await setDoc(confessionRef, {
                         likesCount: increment(-1),
                         [`likedBy.${userId}`]: false
                     }, { merge: true });
                 } else {
+                    // Increment likes and set user's like status to true
                     await setDoc(confessionRef, {
                         likesCount: increment(1),
                         [`likedBy.${userId}`]: true
@@ -975,27 +1274,48 @@
             }
         }
 
+        // Handle copying the share link for a confession
         function handleShareConfession(confessionId, copiedMessageSpan) {
             const shareUrl = `${window.location.origin}${window.location.pathname}?confessionId=${confessionId}`;
             
+            // Create a temporary textarea to copy text to clipboard
             const textarea = document.createElement('textarea');
             textarea.value = shareUrl;
-            textarea.style.position = 'fixed';
+            textarea.style.position = 'fixed'; // Make it invisible
             textarea.style.left = '-9999px';
             document.body.appendChild(textarea);
             textarea.focus();
-            textarea.select();
+            textarea.select(); // Select the text
             try {
-                document.execCommand('copy');
-                copiedMessageSpan.classList.remove('hidden');
+                document.execCommand('copy'); // Execute copy command
+                copiedMessageSpan.classList.remove('hidden'); // Show "Copied!" message
                 setTimeout(() => {
-                    copiedMessageSpan.classList.add('hidden');
+                    copiedMessageSpan.classList.add('hidden'); // Hide after a delay
                 }, 2000);
             } catch (err) {
                 console.error('Failed to copy link via document.execCommand:', err);
                 showInfoModal("Failed to copy link. Please copy manually: " + shareUrl);
             }
-            document.body.removeChild(textarea);
+            document.body.removeChild(textarea); // Remove the temporary textarea
+        }
+
+        // Handle sharing a confession on Twitter
+        function handleTwitterShare(confessionId) {
+            const confession = allConfessions.find(c => c.id === confessionId);
+            if (!confession) return;
+
+            const shareUrl = `${window.location.origin}${window.location.pathname}?confessionId=${confessionId}`;
+            // Construct a tweet text, truncating if too long
+            const text = `Confession to ${confession.crushName}: "${confession.message.substring(0, 100)}${confession.message.length > 100 ? '...' : ''}"`;
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+            window.open(twitterUrl, '_blank'); // Open Twitter share dialog in new tab
+        }
+
+        // Handle sharing a confession on Facebook
+        function handleFacebookShare(confessionId) {
+            const shareUrl = `${window.location.origin}${window.location.pathname}?confessionId=${confessionId}`;
+            const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+            window.open(facebookUrl, '_blank'); // Open Facebook share dialog in new tab
         }
 
         // --- Copy User ID Functionality ---
@@ -1025,36 +1345,38 @@
 
 
         // --- Reply Modal Logic ---
-        let unsubscribeReplies = null; // Listener for replies
+        let unsubscribeReplies = null; // Listener for real-time replies
 
         function openReplyModal(confession) {
             currentConfessionToReplyTo = confession;
+            // Populate original confession snippet in the reply modal
             originalConfessionSnippet.innerHTML = `
                 <p class="text-gray-700 italic text-md mb-2">"${confession.message}"</p>
                 <p class="text-sm text-gray-500 text-right">To: ${confession.crushName} - ${formatTimestamp(confession.timestamp)}</p>
             `;
-            showModal(replyModal);
-            setupRepliesListener(confession.id);
+            showModal(replyModal); // Show the reply modal
+            setupRepliesListener(confession.id); // Start listening for replies to this confession
         }
 
         function closeReplyModal() {
-            hideModal(replyModal);
-            currentConfessionToReplyTo = null;
+            hideModal(replyModal); // Hide the reply modal
+            currentConfessionToReplyTo = null; // Clear the current confession context
             if (unsubscribeReplies) {
-                unsubscribeReplies();
+                unsubscribeReplies(); // Detach replies listener
                 unsubscribeReplies = null;
             }
-            replyMessageInput.value = '';
+            replyMessageInput.value = ''; // Clear reply input field
         }
 
-        closeReplyModalBtn.addEventListener('click', closeReplyModal);
+        closeReplyModalBtn.addEventListener('click', closeReplyModal); // Close via X button
         replyModal.addEventListener('click', (e) => {
-            if (e.target === replyModal) closeReplyModal();
+            if (e.target === replyModal) closeReplyModal(); // Close when clicking outside modal content
         });
 
+        // Set up real-time listener for replies to a specific confession
         function setupRepliesListener(confessionId) {
             if (unsubscribeReplies) {
-                unsubscribeReplies();
+                unsubscribeReplies(); // Detach previous listener if any
             }
 
             if (!db || !confessionId) {
@@ -1063,23 +1385,25 @@
             }
 
             const repliesCollectionPath = `artifacts/${APP_ID}/public/data/crush_board/${confessionId}/replies`;
+            // Query replies, ordered by timestamp ascending
             const q = query(collection(db, repliesCollectionPath), orderBy('timestamp', 'asc'));
 
             unsubscribeReplies = onSnapshot(q, (snapshot) => {
                 const fetchedReplies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderReplies(fetchedReplies);
+                renderReplies(fetchedReplies); // Render fetched replies
             }, (error) => {
                 console.error("Error fetching replies:", error);
                 showInfoModal(`Failed to load replies: ${error.message}`);
             });
         }
 
+        // Render replies in the reply modal
         function renderReplies(replies) {
-            repliesListContainer.innerHTML = '';
+            repliesListContainer.innerHTML = ''; // Clear existing replies
             if (replies.length === 0) {
-                noRepliesMessage.classList.remove('hidden');
+                noRepliesMessage.classList.remove('hidden'); // Show "no replies" message
             } else {
-                noRepliesMessage.classList.add('hidden');
+                noRepliesMessage.classList.add('hidden'); // Hide "no replies" message
                 replies.forEach(reply => {
                     const replyDiv = document.createElement('div');
                     replyDiv.className = "mb-3 p-3 bg-white rounded-lg shadow-sm border border-gray-100 last:mb-0 animate-fade-in-up";
@@ -1089,13 +1413,15 @@
                             Replied by ${reply.userId.substring(0, 6)}... at ${formatTimestamp(reply.timestamp)}
                         </p>
                     `;
-                    repliesListContainer.appendChild(replyDiv);
+                    repliesListContainer.appendChild(replyDiv); // Append each reply
                 });
             }
+            // Ensure the scroll view goes to the latest reply
             repliesListContainer.appendChild(repliesEndRef);
             repliesEndRef.scrollIntoView({ behavior: 'smooth' });
         }
 
+        // Event listener for posting a reply
         postReplyBtn.addEventListener('click', async () => {
             const replyMessage = replyMessageInput.value.trim();
             if (!replyMessage) {
@@ -1121,11 +1447,18 @@
                     userId: userId,
                     originalConfessionId: currentConfessionToReplyTo.id,
                 });
-                replyMessageInput.value = '';
+                // Also increment the replyCount on the parent confession document
+                const confessionRef = doc(db, `artifacts/${APP_ID}/public/data/crush_board`, currentConfessionToReplyTo.id);
+                await setDoc(confessionRef, {
+                    replyCount: increment(1)
+                }, { merge: true }); // Use merge to avoid overwriting other fields
+
+                replyMessageInput.value = ''; // Clear input after posting
             } catch (error) {
                 console.error("Error posting reply:", error);
                 showInfoModal(`Failed to post reply: ${error.message}.`);
             } finally {
+                // Reset button state
                 isReplying = false;
                 postReplyBtn.textContent = 'Post Reply';
                 postReplyBtn.disabled = false;
@@ -1137,48 +1470,49 @@
         // --- Notes Modal Logic ---
         function openNotesModal(notes) {
             notesContent.textContent = notes || "No extra notes for this confession.";
-            if (!notes) {
+            if (!notes || notes.trim() === '') { // Also check if notes are just whitespace
                 notesContent.classList.add('italic');
                 notesContent.classList.add('text-gray-500');
             } else {
                 notesContent.classList.remove('italic');
                 notesContent.classList.remove('text-gray-500');
             }
-            showModal(notesModal);
+            showModal(notesModal); // Show the notes modal
         }
 
         function closeNotesModal() {
-            hideModal(notesModal);
+            hideModal(notesModal); // Hide the notes modal
         }
 
-        closeNotesModalBtn.addEventListener('click', closeNotesModal);
-        notesOkBtn.addEventListener('click', closeNotesModal);
+        closeNotesModalBtn.addEventListener('click', closeNotesModal); // Close via X button
+        notesOkBtn.addEventListener('click', closeNotesModal); // Close via OK button
         notesModal.addEventListener('click', (e) => {
-            if (e.target === notesModal) closeNotesModal();
+            if (e.target === notesModal) closeNotesModal(); // Close when clicking outside modal content
         });
 
-        // --- Report Modal Logic (New) ---
+        // --- Report Modal Logic ---
         function openReportModal() {
-            // Reset radio buttons and textarea
+            // Reset report form fields when opening
             reportReasonRadios.forEach(radio => radio.checked = false);
-            reportReasonRadios[0].checked = true; // Select 'Inappropriate' by default
+            reportReasonRadios[0].checked = true; // Select 'Inappropriate Content' by default
             reportDetailsInput.value = '';
-            showModal(reportModal);
+            showModal(reportModal); // Show the report modal
         }
 
         function closeReportModal() {
-            hideModal(reportModal);
-            currentConfessionToReport = null;
+            hideModal(reportModal); // Hide the report modal
+            currentConfessionToReport = null; // Clear the reported confession context
         }
 
-        closeReportModalBtn.addEventListener('click', closeReportModal);
+        closeReportModalBtn.addEventListener('click', closeReportModal); // Close via X button
         reportModal.addEventListener('click', (e) => {
-            if (e.target === reportModal) closeReportModal();
+            if (e.target === reportModal) closeReportModal(); // Close when clicking outside modal content
         });
 
+        // Event listener for submitting a report
         submitReportBtn.addEventListener('click', async () => {
             if (!db || !userId || !currentConfessionToReport?.id) {
-                showInfoModal("Cannot submit report: App not connected or confession missing.");
+                showInfoModal("Cannot submit report: Application not connected or confession missing.");
                 return;
             }
 
@@ -1200,12 +1534,13 @@
                     details: reportDetails,
                     timestamp: serverTimestamp(),
                 });
-                hideModal(reportModal);
+                hideModal(reportModal); // Close the report modal
                 showInfoModal("Report submitted successfully! Thank you for helping us keep the community safe.");
             } catch (error) {
                 console.error("Error submitting report:", error);
                 showInfoModal(`Failed to submit report: ${error.message}. Please try again.`);
             } finally {
+                // Reset button state
                 isReporting = false;
                 submitReportBtn.textContent = 'Submit Report';
                 submitReportBtn.disabled = false;
@@ -1214,6 +1549,53 @@
             }
         });
 
+        // --- Delete Confession Logic (New) ---
+        async function handleDeleteConfession(confessionId) {
+            if (!db || !userId) {
+                showInfoModal("Cannot delete: You must be signed in.");
+                return;
+            }
+
+            const confessionRef = doc(db, `artifacts/${APP_ID}/public/data/crush_board`, confessionId);
+            const repliesCollectionRef = collection(db, `artifacts/${APP_ID}/public/data/crush_board`, confessionId, 'replies');
+
+            isDeleting = true; // Set deleting state
+
+            try {
+                // First, delete all replies associated with the confession (Firestore doesn't cascade deletes automatically)
+                // This is a basic approach; for large numbers of replies, a Cloud Function might be better.
+                const repliesSnapshot = await getDocs(repliesCollectionRef); // Get all reply documents
+                const deleteReplyPromises = [];
+                repliesSnapshot.forEach((replyDoc) => {
+                    deleteReplyPromises.push(deleteDoc(doc(repliesCollectionRef, replyDoc.id)));
+                });
+                await Promise.all(deleteReplyPromises); // Wait for all replies to be deleted
+
+                // Then, delete the main confession document
+                await deleteDoc(confessionRef);
+                showToast("Confession deleted successfully!"); // Use toast for a less intrusive confirmation
+            } catch (error) {
+                console.error("Error deleting confession or replies:", error);
+                showInfoModal(`Failed to delete confession: ${error.message}.`);
+            } finally {
+                isDeleting = false; // Reset deleting state
+                // The onSnapshot listener will automatically re-render the list, so no manual re-render here.
+            }
+        }
+
+        // --- About Modal Logic (New) ---
+        openAboutModalFooterBtn.addEventListener('click', () => {
+            showModal(aboutModal);
+        });
+        closeAboutModalBtn.addEventListener('click', () => {
+            hideModal(aboutModal);
+        });
+        aboutOkBtn.addEventListener('click', () => {
+            hideModal(aboutModal);
+        });
+        aboutModal.addEventListener('click', (e) => {
+            if (e.target === aboutModal) hideModal(aboutModal);
+        });
 
         // --- Initialize the App ---
         window.addEventListener('load', initializeFirebase);
