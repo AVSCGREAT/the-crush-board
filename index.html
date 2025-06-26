@@ -302,6 +302,7 @@
                 <textarea id="message-input" class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-transparent transition duration-200 resize-y min-h-[100px] placeholder-gray-400" placeholder="Your secret message..." rows="4"></textarea>
                 <input type="text" id="crush-name-input" class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-transparent transition duration-200 placeholder-gray-400" placeholder="Your crush's name or a hint..." />
                 <input type="text" id="social-media-input" class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-transparent transition duration-200 placeholder-gray-400" placeholder="Social media (optional, e.g., @username or link)" />
+                <input type="text" id="tags-input" class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-300 focus:border-transparent transition duration-200 placeholder-gray-400" placeholder="Tags (comma-separated, e.g., #funny, #sad)" />
                 <textarea id="notes-input" class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-300 focus:border-transparent transition duration-200 resize-y min-h-[80px] placeholder-gray-400" placeholder="Any extra notes or context (optional)..." rows="3"></textarea>
                 <button id="post-confession-btn" class="w-full py-3 px-6 rounded-full font-bold text-white shadow-md transform transition duration-300 ease-in-out bg-gradient-to-r from-purple-500 to-pink-500 hover:scale-[1.02] hover:shadow-lg">
                     Post My Confession
@@ -507,6 +508,7 @@
         const messageInput = document.getElementById('message-input');
         const crushNameInput = document.getElementById('crush-name-input');
         const socialMediaInput = document.getElementById('social-media-input');
+        const tagsInput = document.getElementById('tags-input'); // New DOM element for tags
         const notesInput = document.getElementById('notes-input');
         const postConfessionBtn = document.getElementById('post-confession-btn');
 
@@ -548,7 +550,6 @@
         const infoModal = document.getElementById('info-modal');
         const infoModalMessage = document.getElementById('info-modal-message');
         const closeInfoModalBtn = document.getElementById('close-info-modal-btn');
-        // Get the new confirm button
         const infoModalConfirmBtn = document.getElementById('info-modal-confirm-btn'); 
 
         const confessionsListTitle = document.getElementById('confessions-list-title');
@@ -767,6 +768,11 @@
                         <a href="${confession.socialMedia.startsWith('http') ? confession.socialMedia : `https://${confession.socialMedia}`}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
                             ${confession.socialMedia}
                         </a>
+                    </div>
+                ` : ''}
+                ${confession.tags && confession.tags.length > 0 ? `
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        ${confession.tags.map(tag => `<span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">#${tag}</span>`).join('')}
                     </div>
                 ` : ''}
                 <p class="text-xs text-gray-500 text-right mt-2">${formatTimestamp(confession.timestamp)}</p>
@@ -1013,7 +1019,8 @@
                     likesCount: typeof conf.likesCount === 'number' ? conf.likesCount : 0,
                     likedBy: typeof conf.likedBy === 'object' && conf.likedBy !== null ? conf.likedBy : {},
                     notes: typeof conf.notes === 'string' ? conf.notes : '', // Ensure notes is a string, default to empty
-                    replyCount: typeof conf.replyCount === 'number' ? conf.replyCount : 0 // Initialize replyCount
+                    replyCount: typeof conf.replyCount === 'number' ? conf.replyCount : 0, // Initialize replyCount
+                    tags: Array.isArray(conf.tags) ? conf.tags : [] // Ensure tags is an array, default to empty array
                 }));
 
                 // Check for new replies to user's own confessions and show toast notification
@@ -1069,6 +1076,7 @@
             messageInput.value = '';
             crushNameInput.value = '';
             socialMediaInput.value = '';
+            tagsInput.value = ''; // Clear new tags input
             notesInput.value = '';
             showModal(confessionFormModal); // Show the modal
         });
@@ -1082,7 +1090,13 @@
             const message = messageInput.value.trim();
             const crushName = crushNameInput.value.trim();
             const socialMedia = socialMediaInput.value.trim();
+            const rawTags = tagsInput.value.trim(); // Get raw tags input
             const notes = notesInput.value.trim();
+
+            // Process tags: split by comma, trim, filter out empty strings, convert to lowercase
+            const processedTags = rawTags.split(',')
+                                        .map(tag => tag.trim().toLowerCase())
+                                        .filter(tag => tag !== '');
 
             // Basic input validation
             if (!message || !crushName) {
@@ -1109,6 +1123,7 @@
                     crushName: crushName,
                     socialMedia: socialMedia,
                     notes: notes, // Save notes field to Firestore
+                    tags: processedTags, // Save processed tags to Firestore
                     timestamp: serverTimestamp(), // Use server timestamp for consistency
                     userId: userId,
                     likesCount: 0,
