@@ -242,13 +242,27 @@
 
     <!-- Firebase SDKs -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, orderBy, doc, setDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Updated Firebase SDK version to 11.9.1 as per user's earlier snippet
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, orderBy, doc, setDoc, increment } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
-        // --- Configuration (from React App) ---
-        // Removed hardcoded __app_id, __firebase_config, and __initial_auth_token
-        // These are now expected to be provided by the Canvas environment.
+        // --- Configuration ---
+        // Your web app's Firebase configuration (directly from user's provided snippet)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZ1CcxjdZKr01vOymk1p6cudFXxRsjgNk",
+            authDomain: "crush-board.firebaseapp.com",
+            projectId: "crush-board",
+            storageBucket: "crush-board.firebasestorage.app",
+            messagingSenderId: "6329318993",
+            appId: "1:6329318993:web:c4e95231b89f158cd54270",
+            measurementId: "G-WE6BLDLGFH"
+        };
+
+        const __app_id = "crush-board"; // Used for Firestore collection paths. Keep this as it's a conceptual app ID.
+        // __initial_auth_token is not needed for anonymous sign-in, which is used for GitHub Pages deployment.
+        const __initial_auth_token = null; 
+        // If you intended to use custom tokens, you would need a server to generate them.
 
         // --- Global State Variables ---
         let db = null;
@@ -366,9 +380,7 @@
         async function initializeFirebase() {
             try {
                 showLoadingSpinner();
-                // Use the global __app_id and __firebase_config provided by the Canvas environment
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                // Use the direct firebaseConfig object defined above
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 const authInstance = getAuth(app);
@@ -390,26 +402,30 @@
                         userIdDisplay.classList.remove('hidden');
                     } else {
                         try {
-                            // Use the global __initial_auth_token provided by the Canvas environment
-                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                await signInWithCustomToken(authInstance, __initial_auth_token);
-                            } else {
-                                await signInAnonymously(authInstance);
-                            }
+                            // Sign in anonymously for public data access on static sites.
+                            // If you intend to use other auth methods, configure them in Firebase console.
+                            await signInAnonymously(authInstance);
                         } catch (error) {
                             console.error("Authentication Error:", error);
-                            showInfoModal(`Authentication failed: ${error.message}. Please try again.`);
+                            // More specific guidance for the user for configuration-not-found error
+                            if (error.code === 'auth/configuration-not-found') {
+                                showInfoModal(`Authentication failed: Firebase project configuration not found for authentication. Please ensure:
+                                1. Your Firebase project ID in firebaseConfig is correct.
+                                2. "Anonymous" sign-in method is enabled in Firebase Authentication -> Sign-in method tab.`);
+                            } else {
+                                showInfoModal(`Authentication failed: ${error.message}. Please try again.`);
+                            }
                         }
                     }
                     // Once authenticated, start listening for confessions
-                    if (db && userId) { // Ensure db is also initialized
+                    if (db && userId) { // Ensure db is also initialized and userId obtained
                         setupConfessionsListener();
                     }
                     hideLoadingSpinner();
                 });
             } catch (error) {
                 console.error("Firebase Initialization Failed:", error);
-                showInfoModal(`Application initialization error: ${error.message}.`);
+                showInfoModal(`Application initialization error: ${error.message}. Please check your Firebase configuration and internet connection.`);
                 hideLoadingSpinner();
             }
         }
@@ -854,6 +870,7 @@
                     repliesListContainer.appendChild(replyDiv);
                 });
             }
+            // Corrected the typo here: repliesEndContainer to repliesEndRef
             repliesListContainer.appendChild(repliesEndRef); // Ensure ref is at the end
             repliesEndRef.scrollIntoView({ behavior: 'smooth' }); // Scroll to bottom
         }
