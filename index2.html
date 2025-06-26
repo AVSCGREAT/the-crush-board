@@ -95,6 +95,10 @@
             max-width: 24rem;
             text-align: center;
         }
+        .modal-container.notes-modal { /* Added for notes modal */
+            max-width: 28rem;
+            min-height: 200px;
+        }
 
         /* Utility classes for hiding/showing modals */
         .hidden-modal {
@@ -170,6 +174,7 @@
                 <textarea id="message-input" class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-transparent transition duration-200 resize-y min-h-[100px] placeholder-gray-400" placeholder="Your secret message..." rows="4"></textarea>
                 <input type="text" id="crush-name-input" class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-transparent transition duration-200 placeholder-gray-400" placeholder="Your crush's name or a hint..." />
                 <input type="text" id="social-media-input" class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-transparent transition duration-200 placeholder-gray-400" placeholder="Social media (optional, e.g., @username or link)" />
+                <textarea id="notes-input" class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-300 focus:border-transparent transition duration-200 resize-y min-h-[80px] placeholder-gray-400" placeholder="Any extra notes or context (optional)..." rows="3"></textarea>
                 <button id="post-confession-btn" class="w-full py-3 px-6 rounded-full font-bold text-white shadow-md transform transition duration-300 ease-in-out bg-gradient-to-r from-purple-500 to-pink-500 hover:scale-[1.02] hover:shadow-lg">
                     Post My Confession
                 </button>
@@ -225,6 +230,23 @@
                     Post Reply
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Notes Modal (New) -->
+    <div id="notes-modal" class="modal-overlay hidden-modal">
+        <div class="modal-container notes-modal">
+            <button id="close-notes-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Confession Notes</h2>
+            <div id="notes-content" class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex-grow overflow-y-auto text-gray-700">
+                <!-- Notes will be displayed here -->
+                <p class="italic text-gray-500">No extra notes for this confession.</p>
+            </div>
+            <button id="notes-ok-btn" class="w-full py-2 px-4 rounded-full font-bold text-white shadow-md transform transition duration-300 ease-in-out mt-6 bg-purple-500 hover:bg-purple-600 hover:scale-[1.02]">
+                OK
+            </button>
         </div>
     </div>
 
@@ -287,7 +309,8 @@
         const closeFormModalBtn = document.getElementById('close-form-modal-btn');
         const messageInput = document.getElementById('message-input');
         const crushNameInput = document.getElementById('crush-name-input');
-        const socialMediaInput = document.getElementById('social-media-input'); // Corrected line
+        const socialMediaInput = document.getElementById('social-media-input');
+        const notesInput = document.getElementById('notes-input'); // New notes input
         const postConfessionBtn = document.getElementById('post-confession-btn');
 
         const openSearchBtn = document.getElementById('open-search-btn');
@@ -305,6 +328,12 @@
         const repliesEndRef = document.getElementById('replies-end-ref');
         const replyMessageInput = document.getElementById('reply-message-input');
         const postReplyBtn = document.getElementById('post-reply-btn');
+
+        // Notes Modal Elements (New)
+        const notesModal = document.getElementById('notes-modal');
+        const closeNotesModalBtn = document.getElementById('close-notes-modal-btn');
+        const notesContent = document.getElementById('notes-content');
+        const notesOkBtn = document.getElementById('notes-ok-btn');
 
         const infoModal = document.getElementById('info-modal');
         const infoModalMessage = document.getElementById('info-modal-message');
@@ -335,6 +364,10 @@
 
         function getReplyIconSvg() {
             return `<svg class="w-5 h-5 text-gray-600 hover:text-blue-700 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>`;
+        }
+
+        function getNotesIconSvg() { // New Notes Icon SVG
+            return `<svg class="w-5 h-5 text-gray-600 hover:text-green-700 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
         }
 
         // --- Utility Functions ---
@@ -472,6 +505,11 @@
                         <button class="reply-btn p-1 rounded-full bg-white shadow-sm hover:bg-gray-50 transition duration-200" title="Reply to this confession" data-confession-id="${confession.id}">
                             ${getReplyIconSvg()}
                         </button>
+                        ${confession.notes ? `
+                            <button class="notes-btn p-1 rounded-full bg-white shadow-sm hover:bg-gray-50 transition duration-200" title="View notes" data-confession-id="${confession.id}">
+                                ${getNotesIconSvg()}
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -494,6 +532,18 @@
                     openReplyModal(confessionToReply);
                 }
             });
+
+            // Add event listener for the new notes button
+            const notesBtn = card.querySelector('.notes-btn');
+            if (notesBtn) {
+                notesBtn.addEventListener('click', (e) => {
+                    const confessionId = e.currentTarget.dataset.confessionId;
+                    const confessionWithNotes = allConfessions.find(c => c.id === confessionId);
+                    if (confessionWithNotes && confessionWithNotes.notes) {
+                        openNotesModal(confessionWithNotes.notes);
+                    }
+                });
+            }
 
             return card;
         }
@@ -619,7 +669,8 @@
                 fetched = fetched.map(conf => ({
                     ...conf,
                     likesCount: typeof conf.likesCount === 'number' ? conf.likesCount : 0,
-                    likedBy: typeof conf.likedBy === 'object' && conf.likedBy !== null ? conf.likedBy : {}
+                    likedBy: typeof conf.likedBy === 'object' && conf.likedBy !== null ? conf.likedBy : {},
+                    notes: typeof conf.notes === 'string' ? conf.notes : '' // Initialize notes
                 }));
 
                 // Keep allConfessions sorted by newest first for consistent base
@@ -654,6 +705,7 @@
             messageInput.value = '';
             crushNameInput.value = '';
             socialMediaInput.value = '';
+            notesInput.value = ''; // Clear notes input
             showModal(confessionFormModal);
         });
         closeFormModalBtn.addEventListener('click', () => hideModal(confessionFormModal));
@@ -666,6 +718,7 @@
             const message = messageInput.value.trim();
             const crushName = crushNameInput.value.trim();
             const socialMedia = socialMediaInput.value.trim();
+            const notes = notesInput.value.trim(); // Get notes value
 
             if (!message || !crushName) {
                 showInfoModal("Please enter a message and your crush's name.");
@@ -693,6 +746,7 @@
                     message: message,
                     crushName: crushName,
                     socialMedia: socialMedia,
+                    notes: notes, // Save notes to Firestore
                     timestamp: serverTimestamp(),
                     userId: userId,
                     likesCount: 0,
@@ -974,9 +1028,32 @@
             }
         });
 
+        // --- Notes Modal Logic (New) ---
+        function openNotesModal(notes) {
+            notesContent.textContent = notes || "No extra notes for this confession.";
+            if (!notes) {
+                notesContent.classList.add('italic');
+                notesContent.classList.add('text-gray-500');
+            } else {
+                notesContent.classList.remove('italic');
+                notesContent.classList.remove('text-gray-500');
+            }
+            showModal(notesModal);
+        }
+
+        function closeNotesModal() {
+            hideModal(notesModal);
+        }
+
+        closeNotesModalBtn.addEventListener('click', closeNotesModal);
+        notesOkBtn.addEventListener('click', closeNotesModal);
+        notesModal.addEventListener('click', (e) => {
+            if (e.target === notesModal) closeNotesModal();
+        });
+
+
         // --- Initialize the App ---
         window.addEventListener('load', initializeFirebase);
     </script>
 </body>
 </html>
-
