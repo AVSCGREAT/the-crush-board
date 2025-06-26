@@ -6,19 +6,25 @@
     <title>The Crush Board</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter font from Google Fonts -->
+    <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Apply Inter font globally and ensure box-sizing consistency */
         body {
             font-family: 'Inter', sans-serif;
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            /* Optional: Set a background color or image for the body if not handled by React app */
-            background-color: #f0f0f0; 
+            box-sizing: border-box;
+            background: linear-gradient(to bottom right, #fbcfe8, #d8b4fe, #a78bfa); /* bg-gradient-to-br from-pink-300 via-purple-300 to-indigo-400 */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* Align content from the top */
+            padding-top: 1rem; /* p-4 */
+            color: #1f2937; /* text-gray-800 */
         }
-        /* Custom scrollbar styles */
+
+        /* Custom Scrollbar for confessions list and replies */
         .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
         }
@@ -26,49 +32,873 @@
             background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(139, 92, 246, 0.5); /* Purple-ish */
+            background: rgba(139, 92, 246, 0.5); /* purple-500 with opacity */
             border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: rgba(139, 92, 246, 0.8);
         }
-        /* Basic animations from App.js */
+
+        /* Animations */
         @keyframes fade-in-up {
             0% { opacity: 0; transform: translateY(20px); }
             100% { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
+        .animate-fade-in-up {
+            animation: fade-in-up 0.5s ease-out forwards;
+        }
         @keyframes modal-in {
             0% { opacity: 0; transform: scale(0.9); }
             100% { opacity: 1; transform: scale(1); }
         }
-        .animate-modal-in { animation: modal-in 0.3s ease-out forwards; }
+        .animate-modal-in {
+            animation: modal-in 0.3s ease-out forwards;
+        }
+
+        /* General Modal Styling (initially hidden) */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6); /* bg-black bg-opacity-60 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem; /* p-4 */
+            z-index: 50;
+            backdrop-filter: blur(5px); /* backdrop-blur-sm */
+        }
+        .modal-container {
+            background: rgba(255, 255, 255, 0.8); /* bg-white/80 */
+            backdrop-filter: blur(24px); /* backdrop-blur-2xl */
+            padding: 2rem; /* p-8 */
+            border-radius: 1rem; /* rounded-2xl */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); /* shadow-2xl */
+            width: 100%;
+            max-width: 32rem; /* max-w-lg */
+            position: relative;
+            transform: scale(0.95);
+            transition: all 0.3s ease-out;
+            animation: modal-in 0.3s ease-out forwards;
+        }
+        .modal-container.reply-modal {
+            max-width: 48rem; /* max-w-2xl */
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-container.search-modal {
+            max-width: 32rem; /* max-w-lg */
+        }
+        .modal-container.info-modal {
+            max-width: 24rem; /* max-w-sm */
+            text-align: center;
+        }
+
+        /* Utility classes for hiding/showing modals */
+        .hidden-modal {
+            display: none;
+        }
     </style>
 </head>
-<body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+<body class="min-h-screen bg-gradient-to-br from-pink-300 via-purple-300 to-indigo-400 p-4 font-inter text-gray-800 flex flex-col items-center justify-between">
 
-    <!-- React and ReactDOM UMD builds -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel for JSX transformation in the browser (for development/simple setups only, not production) -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="fixed inset-0 bg-gradient-to-br from-pink-300 via-purple-300 to-indigo-400 flex items-center justify-center z-[200]">
+        <div class="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-pink-500"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav id="navbar" class="w-full max-w-3xl bg-white/30 backdrop-blur-lg p-3 rounded-2xl shadow-xl mb-4 flex justify-between items-center border border-white/20">
+        <!-- Search Button -->
+        <button id="open-search-btn" class="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-110" aria-label="Open search" title="Search Confessions">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </button>
+
+        <!-- View Navigation Buttons -->
+        <div class="flex space-x-2">
+            <button id="view-recent-btn" class="p-2 rounded-full shadow-lg transition duration-300 ease-in-out transform bg-pink-600 text-white hover:scale-110" title="Show Recent Confessions">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l7 7m-15 4v5a1 1 0 001 1h3m-6 0h6"></path></svg>
+            </button>
+            <button id="view-archive-btn" class="p-2 rounded-full shadow-lg transition duration-300 ease-in-out transform bg-indigo-500 hover:bg-indigo-600 text-white hover:scale-110" title="Show Archived Confessions">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+            </button>
+            <button id="view-popular-btn" class="p-2 rounded-full shadow-lg transition duration-300 ease-in-out transform bg-green-500 hover:bg-green-600 text-white hover:scale-110" title="Show Popular Confessions">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Header -->
+    <header id="main-header" class="bg-white/30 backdrop-blur-lg p-6 rounded-2xl shadow-xl mb-8 w-full max-w-3xl text-center border border-white/20 relative">
+        <h1 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 mb-2">💘 The Crush Board 💘</h1>
+        <p class="text-gray-700 text-lg">Browse recent confessions or post your own!</p>
+        <p id="user-id-display" class="text-sm text-gray-600 mt-2 bg-white/50 rounded-full px-3 py-1 inline-block hidden">User ID: <span class="font-mono text-xs break-all"></span></p>
+        <button id="clear-shared-confession-btn" class="absolute top-4 left-1/2 -translate-x-1/2 bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full shadow-lg transition duration-300 ease-in-out text-sm hidden" title="View All Confessions">
+            View All
+        </button>
+    </header>
+
+    <!-- Main Confessions List -->
+    <section id="confessions-list-section" class="w-full max-w-3xl">
+        <h2 id="confessions-list-title" class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-400 mb-6 text-center">Recent Confessions</h2>
+        <div id="confessions-container" class="max-h-[70vh] overflow-y-auto custom-scrollbar pr-2">
+            <!-- Confession Cards will be inserted here by JavaScript -->
+            <div id="no-confessions-message" class="bg-white/30 backdrop-blur-lg p-8 rounded-2xl shadow-xl text-center text-gray-700 hidden">
+                <p>No confessions found in this section. 🥺</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Floating Action Button for Posting Confessions -->
+    <div class="fixed bottom-6 right-6 z-40">
+        <button id="open-form-modal-btn" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white p-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-110 hover:shadow-2xl" aria-label="Post a new confession" title="Post a new confession">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+        </button>
+    </div>
+
+    <!-- Confession Form Modal -->
+    <div id="confession-form-modal" class="modal-overlay hidden-modal">
+        <div class="modal-container">
+            <button id="close-form-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Post Your Confession</h2>
+            <div class="space-y-4">
+                <textarea id="message-input" class="w-full p-3 bg-white/80 border border-gray-300/50 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200 resize-y min-h-[100px] placeholder-gray-500" placeholder="Your secret message..." rows="4"></textarea>
+                <input type="text" id="crush-name-input" class="w-full p-3 bg-white/80 border border-gray-300/50 rounded-lg focus:ring-2 focus-ring-purple-400 focus:border-transparent transition duration-200 placeholder-gray-500" placeholder="Your crush's name or a hint..." />
+                <input type="text" id="social-media-input" class="w-full p-3 bg-white/80 border border-gray-300/50 rounded-lg focus:ring-2 focus-ring-pink-400 focus:border-transparent transition duration-200 placeholder-gray-500" placeholder="Social media (optional, e.g., @username or link)" />
+                <button id="post-confession-btn" class="w-full py-3 px-6 rounded-full font-bold text-white shadow-lg transform transition duration-300 ease-in-out bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 hover:shadow-xl">
+                    Post My Confession
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div id="search-modal" class="modal-overlay hidden-modal">
+        <div class="modal-container search-modal">
+            <button id="close-search-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Search Confessions</h2>
+            <div class="space-y-4">
+                <input type="text" id="search-term-input" placeholder="Enter search term..." class="w-full p-3 bg-white/80 border border-gray-300/50 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200 placeholder-gray-500" />
+                <select id="search-category-select" class="w-full p-3 bg-white/80 border border-gray-300/50 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent transition duration-200 text-gray-700">
+                    <option value="text">Message/Crush Name</option>
+                    <option value="date">Date</option>
+                    <option value="id">Confession ID</option>
+                    <option value="crushName">Crush's Name Only</option>
+                </select>
+                <button id="clear-search-btn" class="w-full py-3 px-6 rounded-full font-bold text-white shadow-lg transform transition duration-300 ease-in-out bg-gray-500 hover:bg-gray-600" aria-label="Clear search">
+                    Clear Search
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reply Modal -->
+    <div id="reply-modal" class="modal-overlay hidden-modal">
+        <div class="modal-container reply-modal">
+            <button id="close-reply-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Reply to Confession</h2>
+
+            <!-- Original Confession Snippet -->
+            <div id="original-confession-snippet" class="bg-purple-50 p-4 rounded-lg mb-4 border border-purple-200">
+                <!-- Original confession details will be inserted here -->
+            </div>
+
+            <!-- Replies List -->
+            <div id="replies-list-container" class="flex-grow overflow-y-auto custom-scrollbar pr-2 mb-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <!-- Replies will be inserted here -->
+                <p id="no-replies-message" class="text-gray-500 text-center italic hidden">No replies yet. Be the first!</p>
+                <div id="replies-end-ref"></div>
+            </div>
+
+            <!-- Reply Input Form -->
+            <div class="mt-auto pt-4 border-t border-gray-200">
+                <textarea id="reply-message-input" class="w-full p-3 bg-white/80 border border-gray-300/50 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200 resize-y min-h-[60px] placeholder-gray-500" placeholder="Type your reply here..." rows="2"></textarea>
+                <button id="post-reply-btn" class="w-full py-2 px-4 rounded-full font-bold text-white shadow-lg transform transition duration-300 ease-in-out mt-3 bg-blue-600 hover:bg-blue-700 hover:scale-105">
+                    Post Reply
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info/Error Modal -->
+    <div id="info-modal" class="modal-overlay hidden-modal">
+        <div class="modal-container info-modal">
+            <p id="info-modal-message" class="text-gray-800 text-xl mb-6"></p>
+            <button id="close-info-modal-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105">Close</button>
+        </div>
+    </div>
+
+    <!-- Slim Footer -->
+    <footer class="w-full max-w-3xl bg-white/30 backdrop-blur-lg p-3 rounded-2xl shadow-xl mt-8 flex flex-col items-center justify-center text-gray-700 text-sm border border-white/20">
+        <p class="mb-1">©️ VSC 2025 | Built for projectbeta webdev bootcamp</p>
+        <p>Powered by ASTRA, Hackclub and the music of love</p>
+    </footer>
 
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, orderBy, doc, getDoc, setDoc, deleteDoc, FieldValue, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, orderBy, doc, setDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Define global variables for Firebase config and auth token
-        // These will be populated by the Canvas environment during deployment
-        window.__app_id = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        window.__firebase_config = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-        window.__initial_auth_token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : '';
+        // --- Configuration (from React App) ---
+        // Removed hardcoded __app_id, __firebase_config, and __initial_auth_token
+        // These are now expected to be provided by the Canvas environment.
+
+        // --- Global State Variables ---
+        let db = null;
+        let userId = null;
+        let allConfessions = [];
+        let recentConfessions = [];
+        let archivedConfessions = [];
+        let filteredConfessions = [];
+        let currentView = 'recent'; // 'recent', 'archive', 'popular'
+        let searchTerm = '';
+        let searchCategory = 'text';
+        let sharedConfessionId = null;
+        let currentConfessionToReplyTo = null;
+        let isPosting = false; // For confession form
+        let isReplying = false; // For reply form
+
+        // --- DOM Elements ---
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const userIdSpan = userIdDisplay.querySelector('span');
+        const clearSharedConfessionBtn = document.getElementById('clear-shared-confession-btn');
+
+        const openFormModalBtn = document.getElementById('open-form-modal-btn');
+        const confessionFormModal = document.getElementById('confession-form-modal');
+        const closeFormModalBtn = document.getElementById('close-form-modal-btn');
+        const messageInput = document.getElementById('message-input');
+        const crushNameInput = document.getElementById('crush-name-input');
+        const socialMediaInput = document.getElementById('social-media-input');
+        const postConfessionBtn = document.getElementById('post-confession-btn');
+
+        const openSearchBtn = document.getElementById('open-search-btn');
+        const searchModal = document.getElementById('search-modal');
+        const closeSearchModalBtn = document.getElementById('close-search-modal-btn');
+        const searchTermInput = document.getElementById('search-term-input');
+        const searchCategorySelect = document.getElementById('search-category-select');
+        const clearSearchBtn = document.getElementById('clear-search-btn');
+
+        const replyModal = document.getElementById('reply-modal');
+        const closeReplyModalBtn = document.getElementById('close-reply-modal-btn');
+        const originalConfessionSnippet = document.getElementById('original-confession-snippet');
+        const repliesListContainer = document.getElementById('replies-list-container');
+        const noRepliesMessage = document.getElementById('no-replies-message');
+        const repliesEndRef = document.getElementById('replies-end-ref');
+        const replyMessageInput = document.getElementById('reply-message-input');
+        const postReplyBtn = document.getElementById('post-reply-btn');
+
+        const infoModal = document.getElementById('info-modal');
+        const infoModalMessage = document.getElementById('info-modal-message');
+        const closeInfoModalBtn = document.getElementById('close-info-modal-btn');
+
+        const confessionsListTitle = document.getElementById('confessions-list-title');
+        const confessionsContainer = document.getElementById('confessions-container');
+        const noConfessionsMessage = document.getElementById('no-confessions-message');
+
+        const viewRecentBtn = document.getElementById('view-recent-btn');
+        const viewArchiveBtn = document.getElementById('view-archive-btn');
+        const viewPopularBtn = document.getElementById('view-popular-btn');
+
+        // --- Helper Functions (SVG Icons) ---
+        function getHeartIconSvg(filled, className = "") {
+            return `<svg class="w-6 h-6 inline-block ${className}" fill="${filled ? "currentColor" : "none"}" stroke="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                    </svg>`;
+        }
+
+        function getAtSymbolIconSvg() {
+            return `<svg class="w-4 h-4 inline-block mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 0 01-4.5 1.207" /></svg>`;
+        }
+
+        function getShareIconSvg() {
+            return `<svg class="w-5 h-5 text-gray-600 hover:text-purple-700 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.882 13.064 9 12.735 9 12c0-.736-.118-1.065-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.21-3.606A3 3 0 0015.5 12c0 .59-.095 1.096-.277 1.554m0-2.684l-6.21 3.606c-.182-.458-.277-.964-.277-1.554M15.5 12A3 3 0 1115.5 9a3 3 0 010 3z"></path></svg>`;
+        }
+
+        function getReplyIconSvg() {
+            return `<svg class="w-5 h-5 text-gray-600 hover:text-blue-700 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>`;
+        }
+
+        // --- Utility Functions ---
+        function showLoadingSpinner() {
+            loadingSpinner.classList.remove('hidden');
+        }
+
+        function hideLoadingSpinner() {
+            loadingSpinner.classList.add('hidden');
+        }
+
+        function showInfoModal(message) {
+            infoModalMessage.textContent = message;
+            infoModal.classList.remove('hidden-modal');
+        }
+
+        function closeInfoModal() {
+            infoModal.classList.add('hidden-modal');
+        }
+
+        function formatTimestamp(ts) {
+            if (!ts) return 'A moment ago';
+            if (ts.toDate) {
+                return ts.toDate().toLocaleString();
+            }
+            return new Date(ts).toLocaleString();
+        }
+
+        function showModal(modalElement) {
+            modalElement.classList.remove('hidden-modal');
+        }
+
+        function hideModal(modalElement) {
+            modalElement.classList.add('hidden-modal');
+        }
+
+        // --- Main App Logic ---
+
+        // Initialize Firebase
+        async function initializeFirebase() {
+            try {
+                showLoadingSpinner();
+                // Use the global __app_id and __firebase_config provided by the Canvas environment
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                const authInstance = getAuth(app);
+
+                // Handle shared confession ID from URL
+                const params = new URLSearchParams(window.location.search);
+                const idFromUrl = params.get('confessionId');
+                if (idFromUrl) {
+                    sharedConfessionId = idFromUrl;
+                    // Clear the URL parameter after reading it to prevent re-applying on refresh
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+
+                // Authenticate user
+                onAuthStateChanged(authInstance, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdSpan.textContent = userId;
+                        userIdDisplay.classList.remove('hidden');
+                    } else {
+                        try {
+                            // Use the global __initial_auth_token provided by the Canvas environment
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                await signInWithCustomToken(authInstance, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(authInstance);
+                            }
+                        } catch (error) {
+                            console.error("Authentication Error:", error);
+                            showInfoModal(`Authentication failed: ${error.message}. Please try again.`);
+                        }
+                    }
+                    // Once authenticated, start listening for confessions
+                    if (db && userId) { // Ensure db is also initialized
+                        setupConfessionsListener();
+                    }
+                    hideLoadingSpinner();
+                });
+            } catch (error) {
+                console.error("Firebase Initialization Failed:", error);
+                showInfoModal(`Application initialization error: ${error.message}.`);
+                hideLoadingSpinner();
+            }
+        }
+
+        // Function to render a single confession card
+        function renderConfessionCard(confession) {
+            const hasLiked = confession.likedBy && userId ? confession.likedBy[userId] === true : false;
+            const card = document.createElement('div');
+            card.className = "bg-white/30 backdrop-blur-lg border border-white/20 p-5 rounded-xl mb-4 shadow-lg transition-all duration-500 transform hover:scale-[1.02] hover:shadow-xl break-words animate-fade-in-up relative";
+            card.innerHTML = `
+                <p class="text-gray-800 text-lg mb-3 italic">"${confession.message}"</p>
+                <div class="border-t border-purple-200/50 my-3"></div>
+                <div class="flex items-center text-pink-700 font-semibold mb-2">${getHeartIconSvg(false, '')}To: <span class="text-purple-800 ml-2">${confession.crushName}</span></div>
+                ${confession.socialMedia ? `
+                    <div class="flex items-center text-sm text-gray-600 mb-2">
+                        ${getAtSymbolIconSvg()}
+                        <a href="${confession.socialMedia.startsWith('http') ? confession.socialMedia : `https://${confession.socialMedia}`}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
+                            ${confession.socialMedia}
+                        </a>
+                    </div>
+                ` : ''}
+                <p class="text-xs text-gray-500 text-right mt-2">${formatTimestamp(confession.timestamp)}</p>
+                <p class="text-[10px] text-gray-400 text-right mt-1">ID: <span class="font-mono">${confession.id}</span></p>
+
+                <div class="flex justify-between items-center mt-3">
+                    <div class="flex items-center space-x-1">
+                        <button class="like-btn p-1 rounded-full bg-white/50 hover:bg-white/80 transition duration-200 shadow-sm" title="${hasLiked ? "Unlike" : "Like"}" data-confession-id="${confession.id}" data-liked="${hasLiked}">
+                            ${getHeartIconSvg(hasLiked, hasLiked ? "text-red-500" : "text-gray-600")}
+                        </button>
+                        <span class="text-sm font-semibold text-gray-700">${confession.likesCount || 0}</span>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button class="share-btn p-1 rounded-full bg-white/50 hover:bg-white/80 transition duration-200 shadow-sm" title="Share this confession" data-confession-id="${confession.id}">
+                            ${getShareIconSvg()}
+                        </button>
+                        <span class="copied-message text-xs text-green-700 bg-green-100 rounded-full px-2 py-1 animate-fade-in-up hidden">Copied!</span>
+
+                        <button class="reply-btn p-1 rounded-full bg-white/50 hover:bg-white/80 transition duration-200 shadow-sm" title="Reply to this confession" data-confession-id="${confession.id}">
+                            ${getReplyIconSvg()}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Attach event listeners for like, share, and reply
+            card.querySelector('.like-btn').addEventListener('click', (e) => {
+                const confessionId = e.currentTarget.dataset.confessionId;
+                const likedStatus = e.currentTarget.dataset.liked === 'true';
+                handleToggleLike(confessionId, likedStatus);
+            });
+
+            card.querySelector('.share-btn').addEventListener('click', (e) => {
+                const confessionId = e.currentTarget.dataset.confessionId;
+                handleShareConfession(confessionId, e.currentTarget.nextElementSibling); // Pass the copied message span
+            });
+
+            card.querySelector('.reply-btn').addEventListener('click', (e) => {
+                const confessionId = e.currentTarget.dataset.confessionId;
+                const confessionToReply = allConfessions.find(c => c.id === confessionId);
+                if (confessionToReply) {
+                    openReplyModal(confessionToReply);
+                }
+            });
+
+            return card;
+        }
+
+        // Function to render the list of confessions
+        function renderConfessionsList() {
+            confessionsContainer.innerHTML = ''; // Clear existing cards
+            if (filteredConfessions.length === 0) {
+                noConfessionsMessage.classList.remove('hidden');
+            } else {
+                noConfessionsMessage.classList.add('hidden');
+                filteredConfessions.forEach(confession => {
+                    confessionsContainer.appendChild(renderConfessionCard(confession));
+                });
+            }
+            confessionsContainer.appendChild(document.createElement('div')); // Placeholder for scroll ref
+            confessionsContainer.lastChild.id = 'confessions-end-ref'; // Re-add ref for scroll
+            
+            // Update title
+            if (sharedConfessionId) {
+                confessionsListTitle.textContent = "Shared Confession";
+                clearSharedConfessionBtn.classList.remove('hidden');
+            } else if (currentView === 'recent') {
+                confessionsListTitle.textContent = "Recent Confessions";
+                clearSharedConfessionBtn.classList.add('hidden');
+            } else if (currentView === 'archive') {
+                confessionsListTitle.textContent = "Archived Confessions";
+                clearSharedConfessionBtn.classList.add('hidden');
+            } else if (currentView === 'popular') {
+                confessionsListTitle.textContent = "Popular Confessions";
+                clearSharedConfessionBtn.classList.add('hidden');
+            }
+        }
+
+        // Filter and sort confessions based on current view and search
+        function applyFiltersAndSort() {
+            let confessionsToProcess = [];
+
+            if (sharedConfessionId && allConfessions.length > 0) {
+                const foundConfession = allConfessions.find(c => c.id === sharedConfessionId);
+                confessionsToProcess = foundConfession ? [foundConfession] : [];
+            } else {
+                if (currentView === 'recent') {
+                    confessionsToProcess = recentConfessions;
+                } else if (currentView === 'archive') {
+                    confessionsToProcess = archivedConfessions;
+                } else if (currentView === 'popular') {
+                    confessionsToProcess = [...allConfessions].sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
+                }
+
+                if (searchTerm) {
+                    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+                    confessionsToProcess = confessionsToProcess.filter(confession => {
+                        switch (searchCategory) {
+                            case 'text':
+                                return (
+                                    confession.message.toLowerCase().includes(lowerCaseSearchTerm) ||
+                                    confession.crushName.toLowerCase().includes(lowerCaseSearchTerm)
+                                );
+                            case 'date':
+                                const formattedDate = formatTimestamp(confession.timestamp);
+                                return formattedDate.toLowerCase().includes(lowerCaseSearchTerm);
+                            case 'id':
+                                return confession.id.toLowerCase() === lowerCaseSearchTerm;
+                            case 'crushName':
+                                return confession.crushName.toLowerCase().includes(lowerCaseSearchTerm);
+                            default:
+                                return false;
+                        }
+                    });
+                }
+            }
+            filteredConfessions = confessionsToProcess;
+            renderConfessionsList();
+        }
+
+        // Listener for confessions data
+        let unsubscribeConfessions = null;
+        function setupConfessionsListener() {
+            if (unsubscribeConfessions) {
+                unsubscribeConfessions(); // Unsubscribe from previous listener if exists
+            }
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const publicCollectionPath = `artifacts/${appId}/public/data/crush_board`;
+            const q = query(collection(db, publicCollectionPath));
+
+            unsubscribeConfessions = onSnapshot(q, (snapshot) => {
+                let fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                fetched = fetched.map(conf => ({
+                    ...conf,
+                    likesCount: typeof conf.likesCount === 'number' ? conf.likesCount : 0,
+                    likedBy: typeof conf.likedBy === 'object' && conf.likedBy !== null ? conf.likedBy : {}
+                }));
+
+                // Sort by newest first for default views if not popular
+                fetched.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
+
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+                recentConfessions = [];
+                archivedConfessions = [];
+
+                fetched.forEach(confession => {
+                    const confessionDate = confession.timestamp?.toDate ? confession.timestamp.toDate() : new Date(0);
+                    if (confessionDate > oneWeekAgo) {
+                        recentConfessions.push(confession);
+                    } else {
+                        archivedConfessions.push(confession);
+                    }
+                });
+
+                allConfessions = fetched; // Keep all for unfiltered search
+                applyFiltersAndSort(); // Re-render with new data
+                hideLoadingSpinner();
+            }, (error) => {
+                console.error("Failed to fetch confessions:", error);
+                showInfoModal(`Failed to load confessions: ${error.message}`);
+                hideLoadingSpinner();
+            });
+        }
+
+        // --- Event Handlers ---
+
+        // Confession Form Modal
+        openFormModalBtn.addEventListener('click', () => {
+            messageInput.value = '';
+            crushNameInput.value = '';
+            socialMediaInput.value = '';
+            showModal(confessionFormModal);
+        });
+        closeFormModalBtn.addEventListener('click', () => hideModal(confessionFormModal));
+        confessionFormModal.addEventListener('click', (e) => {
+            if (e.target === confessionFormModal) hideModal(confessionFormModal);
+        });
+
+        // Post Confession
+        postConfessionBtn.addEventListener('click', async () => {
+            const message = messageInput.value.trim();
+            const crushName = crushNameInput.value.trim();
+            const socialMedia = socialMediaInput.value.trim();
+
+            if (!message || !crushName) {
+                showInfoModal("Please enter a message and your crush's name.");
+                return;
+            }
+            if (!db || !userId) {
+                showInfoModal("Cannot post: Application not fully connected. Please refresh the page.");
+                return;
+            }
+
+            isPosting = true;
+            postConfessionBtn.textContent = 'Posting...';
+            postConfessionBtn.disabled = true;
+            postConfessionBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            postConfessionBtn.classList.remove('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'hover:scale-105', 'hover:shadow-xl');
+
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const publicCollectionPath = `artifacts/${appId}/public/data/crush_board`;
+                await addDoc(collection(db, publicCollectionPath), {
+                    message: message,
+                    crushName: crushName,
+                    socialMedia: socialMedia,
+                    timestamp: serverTimestamp(),
+                    userId: userId,
+                    likesCount: 0,
+                    likedBy: {}
+                });
+                hideModal(confessionFormModal);
+                showInfoModal("Your confession has been posted successfully!");
+            } catch (error) {
+                console.error("Error posting confession:", error);
+                showInfoModal(`Failed to post your confession: ${error.message}.`);
+            } finally {
+                isPosting = false;
+                postConfessionBtn.textContent = 'Post My Confession';
+                postConfessionBtn.disabled = false;
+                postConfessionBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                postConfessionBtn.classList.add('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'hover:scale-105', 'hover:shadow-xl');
+            }
+        });
+
+        // Search Modal
+        openSearchBtn.addEventListener('click', () => {
+            searchTermInput.value = ''; // Clear search term on open
+            searchCategorySelect.value = 'text'; // Reset category
+            showModal(searchModal);
+        });
+        closeSearchModalBtn.addEventListener('click', () => hideModal(searchModal));
+        searchModal.addEventListener('click', (e) => {
+            if (e.target === searchModal) hideModal(searchModal);
+        });
+
+        searchTermInput.addEventListener('input', () => {
+            searchTerm = searchTermInput.value;
+            applyFiltersAndSort();
+        });
+        searchCategorySelect.addEventListener('change', () => {
+            searchCategory = searchCategorySelect.value;
+            applyFiltersAndSort();
+        });
+        clearSearchBtn.addEventListener('click', () => {
+            searchTermInput.value = '';
+            searchTerm = '';
+            applyFiltersAndSort();
+        });
+
+        // Info Modal
+        closeInfoModalBtn.addEventListener('click', closeInfoModal);
+        infoModal.addEventListener('click', (e) => {
+            if (e.target === infoModal) closeInfoModal();
+        });
+
+        // View Buttons
+        viewRecentBtn.addEventListener('click', () => {
+            currentView = 'recent';
+            updateViewButtons();
+            applyFiltersAndSort();
+        });
+        viewArchiveBtn.addEventListener('click', () => {
+            currentView = 'archive';
+            updateViewButtons();
+            applyFiltersAndSort();
+        });
+        viewPopularBtn.addEventListener('click', () => {
+            currentView = 'popular';
+            updateViewButtons();
+            applyFiltersAndSort();
+        });
+
+        function updateViewButtons() {
+            viewRecentBtn.classList.remove('bg-pink-600');
+            viewRecentBtn.classList.add('bg-pink-500', 'hover:bg-pink-600');
+            viewArchiveBtn.classList.remove('bg-indigo-600');
+            viewArchiveBtn.classList.add('bg-indigo-500', 'hover:bg-indigo-600');
+            viewPopularBtn.classList.remove('bg-green-600');
+            viewPopularBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+
+            if (currentView === 'recent') {
+                viewRecentBtn.classList.add('bg-pink-600');
+                viewRecentBtn.classList.remove('bg-pink-500', 'hover:bg-pink-600');
+            } else if (currentView === 'archive') {
+                viewArchiveBtn.classList.add('bg-indigo-600');
+                viewArchiveBtn.classList.remove('bg-indigo-500', 'hover:bg-indigo-600');
+            } else if (currentView === 'popular') {
+                viewPopularBtn.classList.add('bg-green-600');
+                viewPopularBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            }
+        }
+
+        // Shared Confession Clear Button
+        clearSharedConfessionBtn.addEventListener('click', () => {
+            sharedConfessionId = null;
+            window.history.replaceState({}, document.title, window.location.pathname);
+            applyFiltersAndSort(); // Re-render to show all confessions in current view
+        });
+
+        // --- Confession Actions ---
+
+        async function handleToggleLike(confessionId, currentlyLiked) {
+            if (!db || !userId) {
+                showInfoModal("Cannot like/unlike: You must be signed in.");
+                return;
+            }
+
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const confessionRef = doc(db, `artifacts/${appId}/public/data/crush_board`, confessionId);
+
+            try {
+                if (currentlyLiked) {
+                    await setDoc(confessionRef, {
+                        likesCount: increment(-1),
+                        [`likedBy.${userId}`]: false
+                    }, { merge: true });
+                } else {
+                    await setDoc(confessionRef, {
+                        likesCount: increment(1),
+                        [`likedBy.${userId}`]: true
+                    }, { merge: true });
+                }
+            } catch (error) {
+                console.error("Error toggling like:", error);
+                showInfoModal(`Failed to toggle like: ${error.message}.`);
+            }
+        }
+
+        function handleShareConfession(confessionId, copiedMessageSpan) {
+            const shareUrl = `${window.location.origin}${window.location.pathname}?confessionId=${confessionId}`;
+            
+            const textarea = document.createElement('textarea');
+            textarea.value = shareUrl;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px'; // Hide off-screen
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                copiedMessageSpan.classList.remove('hidden');
+                setTimeout(() => {
+                    copiedMessageSpan.classList.add('hidden');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy link via document.execCommand:', err);
+                showInfoModal("Failed to copy link. Please copy manually: " + shareUrl);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // --- Reply Modal Logic ---
+        let unsubscribeReplies = null; // Listener for replies
+
+        function openReplyModal(confession) {
+            currentConfessionToReplyTo = confession;
+            originalConfessionSnippet.innerHTML = `
+                <p class="text-gray-700 italic text-md mb-2">"${confession.message}"</p>
+                <p class="text-sm text-gray-500 text-right">To: ${confession.crushName} - ${formatTimestamp(confession.timestamp)}</p>
+            `;
+            showModal(replyModal);
+            setupRepliesListener(confession.id);
+        }
+
+        function closeReplyModal() {
+            hideModal(replyModal);
+            currentConfessionToReplyTo = null;
+            if (unsubscribeReplies) {
+                unsubscribeReplies(); // Unsubscribe from replies listener
+                unsubscribeReplies = null;
+            }
+            replyMessageInput.value = ''; // Clear reply input
+        }
+
+        closeReplyModalBtn.addEventListener('click', closeReplyModal);
+        replyModal.addEventListener('click', (e) => {
+            if (e.target === replyModal) closeReplyModal();
+        });
+
+        function setupRepliesListener(confessionId) {
+            if (unsubscribeReplies) {
+                unsubscribeReplies();
+            }
+
+            if (!db || !confessionId) {
+                console.error("DB or confession ID missing for replies listener.");
+                return;
+            }
+
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const repliesCollectionPath = `artifacts/${appId}/public/data/crush_board/${confessionId}/replies`;
+            const q = query(collection(db, repliesCollectionPath), orderBy('timestamp', 'asc'));
+
+            unsubscribeReplies = onSnapshot(q, (snapshot) => {
+                const fetchedReplies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderReplies(fetchedReplies);
+            }, (error) => {
+                console.error("Error fetching replies:", error);
+                showInfoModal(`Failed to load replies: ${error.message}`);
+            });
+        }
+
+        function renderReplies(replies) {
+            repliesListContainer.innerHTML = ''; // Clear existing replies
+            if (replies.length === 0) {
+                noRepliesMessage.classList.remove('hidden');
+            } else {
+                noRepliesMessage.classList.add('hidden');
+                replies.forEach(reply => {
+                    const replyDiv = document.createElement('div');
+                    replyDiv.className = "mb-3 p-3 bg-white rounded-lg shadow-sm border border-gray-100 last:mb-0 animate-fade-in-up";
+                    replyDiv.innerHTML = `
+                        <p class="text-gray-800">${reply.message}</p>
+                        <p class="text-xs text-gray-500 text-right mt-1">
+                            Replied by ${reply.userId.substring(0, 6)}... at ${formatTimestamp(reply.timestamp)}
+                        </p>
+                    `;
+                    repliesListContainer.appendChild(replyDiv);
+                });
+            }
+            repliesListContainer.appendChild(repliesEndRef); // Ensure ref is at the end
+            repliesEndRef.scrollIntoView({ behavior: 'smooth' }); // Scroll to bottom
+        }
+
+        postReplyBtn.addEventListener('click', async () => {
+            const replyMessage = replyMessageInput.value.trim();
+            if (!replyMessage) {
+                showInfoModal("Please enter a reply message.");
+                return;
+            }
+            if (!db || !userId || !currentConfessionToReplyTo?.id) {
+                showInfoModal("Cannot post reply: App not connected or original message missing.");
+                return;
+            }
+
+            isReplying = true;
+            postReplyBtn.textContent = 'Replying...';
+            postReplyBtn.disabled = true;
+            postReplyBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            postReplyBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'hover:scale-105');
+
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const repliesCollectionPath = `artifacts/${appId}/public/data/crush_board/${currentConfessionToReplyTo.id}/replies`;
+                await addDoc(collection(db, repliesCollectionPath), {
+                    message: replyMessage,
+                    timestamp: serverTimestamp(),
+                    userId: userId,
+                    originalConfessionId: currentConfessionToReplyTo.id,
+                });
+                replyMessageInput.value = '';
+            } catch (error) {
+                console.error("Error posting reply:", error);
+                showInfoModal(`Failed to post reply: ${error.message}.`);
+            } finally {
+                isReplying = false;
+                postReplyBtn.textContent = 'Post Reply';
+                postReplyBtn.disabled = false;
+                postReplyBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                postReplyBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'hover:scale-105');
+            }
+        });
+
+        // --- Initialize the App ---
+        window.addEventListener('load', initializeFirebase);
     </script>
-    
-    <!-- Your React App.js code, using type="text/babel" for JSX -->
-    <script type="text/babel" src="App.js"></script>
 </body>
 </html>
