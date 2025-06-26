@@ -144,7 +144,7 @@
         <div id="confessions-container" class="max-h-[70vh] overflow-y-auto custom-scrollbar pr-2">
             <!-- Confession Cards will be inserted here by JavaScript -->
             <div id="no-confessions-message" class="bg-white/30 backdrop-blur-lg p-8 rounded-2xl shadow-xl text-center text-gray-700 hidden">
-                <p>No confessions found in this section. 🥺</p>
+                <p>No confessions found in this section.🥺</p>
             </div>
         </div>
     </section>
@@ -242,13 +242,12 @@
 
     <!-- Firebase SDKs -->
     <script type="module">
-        // Updated Firebase SDK version to 11.9.1 as per user's earlier snippet
+        // Updated Firebase SDK version to 11.9.1
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, orderBy, doc, setDoc, increment } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
         // --- Configuration ---
-        // Your web app's Firebase configuration (directly from user's provided snippet)
         const firebaseConfig = {
             apiKey: "AIzaSyBZ1CcxjdZKr01vOymk1p6cudFXxRsjgNk",
             authDomain: "crush-board.firebaseapp.com",
@@ -259,8 +258,8 @@
             measurementId: "G-WE6BLDLGFH"
         };
 
-        const __app_id = "crush-board"; // Used for Firestore collection paths. Keep this as it's a conceptual app ID.
-        const __initial_auth_token = null; // Explicitly setting this as null for static deployment (anonymous sign-in)
+        const __app_id = "crush-board";
+        const __initial_auth_token = null;
 
         // --- Global State Variables ---
         let db = null;
@@ -378,7 +377,6 @@
         async function initializeFirebase() {
             try {
                 showLoadingSpinner();
-                // Use the direct firebaseConfig object defined above
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 const authInstance = getAuth(app);
@@ -400,11 +398,9 @@
                         userIdDisplay.classList.remove('hidden');
                     } else {
                         try {
-                            // Sign in anonymously for public data access on static sites.
                             await signInAnonymously(authInstance);
                         } catch (error) {
                             console.error("Authentication Error:", error);
-                            // More specific guidance for the user for configuration-not-found error
                             if (error.code === 'auth/configuration-not-found') {
                                 showInfoModal(`Authentication failed: Firebase project configuration not found for authentication. Please ensure:
                                 1. Your Firebase project ID in firebaseConfig is correct.
@@ -414,8 +410,7 @@
                             }
                         }
                     }
-                    // Once authenticated, start listening for confessions
-                    if (db && userId) { // Ensure db is also initialized and userId obtained
+                    if (db && userId) {
                         setupConfessionsListener();
                     }
                     hideLoadingSpinner();
@@ -468,7 +463,6 @@
                 </div>
             `;
 
-            // Attach event listeners for like, share, and reply
             card.querySelector('.like-btn').addEventListener('click', (e) => {
                 const confessionId = e.currentTarget.dataset.confessionId;
                 const likedStatus = e.currentTarget.dataset.liked === 'true';
@@ -477,7 +471,7 @@
 
             card.querySelector('.share-btn').addEventListener('click', (e) => {
                 const confessionId = e.currentTarget.dataset.confessionId;
-                handleShareConfession(confessionId, e.currentTarget.nextElementSibling); // Pass the copied message span
+                handleShareConfession(confessionId, e.currentTarget.nextElementSibling);
             });
 
             card.querySelector('.reply-btn').addEventListener('click', (e) => {
@@ -493,7 +487,7 @@
 
         // Function to render the list of confessions
         function renderConfessionsList() {
-            confessionsContainer.innerHTML = ''; // Clear existing cards
+            confessionsContainer.innerHTML = '';
             if (filteredConfessions.length === 0) {
                 noConfessionsMessage.classList.remove('hidden');
             } else {
@@ -502,14 +496,18 @@
                     confessionsContainer.appendChild(renderConfessionCard(confession));
                 });
             }
-            confessionsContainer.appendChild(document.createElement('div')); // Placeholder for scroll ref
-            confessionsContainer.lastChild.id = 'confessions-end-ref'; // Re-add ref for scroll
+            confessionsContainer.appendChild(document.createElement('div'));
+            confessionsContainer.lastChild.id = 'confessions-end-ref';
             
             // Update title
             if (sharedConfessionId) {
                 confessionsListTitle.textContent = "Shared Confession";
                 clearSharedConfessionBtn.classList.remove('hidden');
-            } else if (currentView === 'recent') {
+            } else if (searchTerm) { // If search is active, title reflects search
+                 confessionsListTitle.textContent = "Search Results";
+                 clearSharedConfessionBtn.classList.add('hidden'); // No clear button needed for search results themselves
+            }
+            else if (currentView === 'recent') {
                 confessionsListTitle.textContent = "Recent Confessions";
                 clearSharedConfessionBtn.classList.add('hidden');
             } else if (currentView === 'archive') {
@@ -523,42 +521,71 @@
 
         // Filter and sort confessions based on current view and search
         function applyFiltersAndSort() {
-            let confessionsToProcess = [];
+            let confessionsToProcess = [...allConfessions]; // Start with ALL confessions
 
-            if (sharedConfessionId && allConfessions.length > 0) {
-                const foundConfession = allConfessions.find(c => c.id === sharedConfessionId);
-                confessionsToProcess = foundConfession ? [foundConfession] : [];
-            } else {
+            // 1. Handle shared confession ID (highest priority, overrides all others)
+            if (sharedConfessionId) {
+                const foundConfession = confessionsToProcess.find(c => c.id === sharedConfessionId);
+                filteredConfessions = foundConfession ? [foundConfession] : [];
+                renderConfessionsList();
+                return; // Exit early if a specific shared confession is being viewed
+            }
+
+            // 2. Apply search term filter (if active)
+            if (searchTerm) {
+                const lowerCaseSearchTerm = searchTerm.toLowerCase();
+                confessionsToProcess = confessionsToProcess.filter(confession => {
+                    switch (searchCategory) {
+                        case 'text':
+                            return (
+                                (confession.message && confession.message.toLowerCase().includes(lowerCaseSearchTerm)) ||
+                                (confession.crushName && confession.crushName.toLowerCase().includes(lowerCaseSearchTerm))
+                            );
+                        case 'date':
+                            const formattedDate = formatTimestamp(confession.timestamp).toLowerCase();
+                            return formattedDate.includes(lowerCaseSearchTerm);
+                        case 'id':
+                            return confession.id.toLowerCase().includes(lowerCaseSearchTerm);
+                        case 'crushName':
+                            return (confession.crushName && confession.crushName.toLowerCase().includes(lowerCaseSearchTerm));
+                        default:
+                            return false;
+                    }
+                });
+            }
+
+            // 3. Apply current view filter (only if no search term is active)
+            if (!searchTerm) {
                 if (currentView === 'recent') {
-                    confessionsToProcess = recentConfessions;
-                } else if (currentView === 'archive') {
-                    confessionsToProcess = archivedConfessions;
-                } else if (currentView === 'popular') {
-                    confessionsToProcess = [...allConfessions].sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
-                }
-
-                if (searchTerm) {
-                    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
                     confessionsToProcess = confessionsToProcess.filter(confession => {
-                        switch (searchCategory) {
-                            case 'text':
-                                return (
-                                    confession.message.toLowerCase().includes(lowerCaseSearchTerm) ||
-                                    confession.crushName.toLowerCase().includes(lowerCaseSearchTerm)
-                                );
-                            case 'date':
-                                const formattedDate = formatTimestamp(confession.timestamp);
-                                return formattedDate.toLowerCase().includes(lowerCaseSearchTerm);
-                            case 'id':
-                                return confession.id.toLowerCase() === lowerCaseSearchTerm;
-                            case 'crushName':
-                                return confession.crushName.toLowerCase().includes(lowerCaseSearchTerm);
-                            default:
-                                return false;
-                        }
+                        const confessionDate = confession.timestamp?.toDate ? confession.timestamp.toDate() : new Date(0);
+                        return confessionDate > oneWeekAgo;
+                    });
+                    // Ensure recent confessions are always sorted newest first
+                    confessionsToProcess.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
+                } else if (currentView === 'archive') {
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                    confessionsToProcess = confessionsToProcess.filter(confession => {
+                        const confessionDate = confession.timestamp?.toDate ? confession.timestamp.toDate() : new Date(0);
+                        return confessionDate <= oneWeekAgo;
+                    });
+                    // Ensure archived confessions are also sorted newest first among themselves
+                    confessionsToProcess.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
+                } else if (currentView === 'popular') {
+                    // Sort by likes, newest as tie-breaker
+                    confessionsToProcess.sort((a, b) => {
+                        const likesDiff = (b.likesCount || 0) - (a.likesCount || 0);
+                        if (likesDiff !== 0) return likesDiff;
+                        return (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0);
                     });
                 }
+            } else { // If a search term is active, sort by newest for consistent results
+                confessionsToProcess.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
             }
+
             filteredConfessions = confessionsToProcess;
             renderConfessionsList();
         }
@@ -567,7 +594,7 @@
         let unsubscribeConfessions = null;
         function setupConfessionsListener() {
             if (unsubscribeConfessions) {
-                unsubscribeConfessions(); // Unsubscribe from previous listener if exists
+                unsubscribeConfessions();
             }
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
             const publicCollectionPath = `artifacts/${appId}/public/data/crush_board`;
@@ -582,26 +609,22 @@
                     likedBy: typeof conf.likedBy === 'object' && conf.likedBy !== null ? conf.likedBy : {}
                 }));
 
-                // Sort by newest first for default views if not popular
-                fetched.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
+                // Keep allConfessions sorted by newest first for consistent base
+                allConfessions = fetched.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
 
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-                recentConfessions = [];
-                archivedConfessions = [];
-
-                fetched.forEach(confession => {
+                recentConfessions = allConfessions.filter(confession => {
                     const confessionDate = confession.timestamp?.toDate ? confession.timestamp.toDate() : new Date(0);
-                    if (confessionDate > oneWeekAgo) {
-                        recentConfessions.push(confession);
-                    } else {
-                        archivedConfessions.push(confession);
-                    }
+                    return confessionDate > oneWeekAgo;
+                });
+                archivedConfessions = allConfessions.filter(confession => {
+                    const confessionDate = confession.timestamp?.toDate ? confession.timestamp.toDate() : new Date(0);
+                    return confessionDate <= oneWeekAgo;
                 });
 
-                allConfessions = fetched; // Keep all for unfiltered search
-                applyFiltersAndSort(); // Re-render with new data
+                applyFiltersAndSort();
                 hideLoadingSpinner();
             }, (error) => {
                 console.error("Failed to fetch confessions:", error);
@@ -636,7 +659,7 @@
             }
             if (!db || !userId) {
                 showInfoModal("Cannot post: Application not fully connected. Please refresh the page.");
-                console.error("DEBUG: db or userId is null. db:", db, "userId:", userId); // Added debug log
+                console.error("DEBUG: db or userId is null. db:", db, "userId:", userId);
                 return;
             }
 
@@ -649,8 +672,8 @@
             try {
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                 const publicCollectionPath = `artifacts/${appId}/public/data/crush_board`;
-                console.log("DEBUG: Attempting to add document to:", publicCollectionPath); // Debug log
-                console.log("DEBUG: userId before addDoc:", userId); // Debug log
+                console.log("DEBUG: Attempting to add document to:", publicCollectionPath);
+                console.log("DEBUG: userId before addDoc:", userId);
 
                 await addDoc(collection(db, publicCollectionPath), {
                     message: message,
@@ -665,8 +688,8 @@
                 showInfoModal("Your confession has been posted successfully!");
             } catch (error) {
                 console.error("Error posting confession:", error);
-                console.error("Firebase Error Code:", error.code); // Log error code
-                console.error("Firebase Error Message:", error.message); // Log error message
+                console.error("Firebase Error Code:", error.code);
+                console.error("Firebase Error Message:", error.message);
                 showInfoModal(`Failed to post your confession: ${error.message}. Please check console for details.`);
             } finally {
                 isPosting = false;
@@ -680,8 +703,10 @@
         // Search Modal
         openSearchBtn.addEventListener('click', () => {
             searchTermInput.value = ''; // Clear search term on open
+            searchTerm = ''; // Reset search term state
             searchCategorySelect.value = 'text'; // Reset category
             showModal(searchModal);
+            applyFiltersAndSort(); // Re-apply filters to show current view
         });
         closeSearchModalBtn.addEventListener('click', () => hideModal(searchModal));
         searchModal.addEventListener('click', (e) => {
@@ -699,7 +724,7 @@
         clearSearchBtn.addEventListener('click', () => {
             searchTermInput.value = '';
             searchTerm = '';
-            applyFiltersAndSort();
+            applyFiltersAndSort(); // Apply filters to return to default view
         });
 
         // Info Modal
@@ -749,7 +774,7 @@
         clearSharedConfessionBtn.addEventListener('click', () => {
             sharedConfessionId = null;
             window.history.replaceState({}, document.title, window.location.pathname);
-            applyFiltersAndSort(); // Re-render to show all confessions in current view
+            applyFiltersAndSort();
         });
 
         // --- Confession Actions ---
@@ -787,7 +812,7 @@
             const textarea = document.createElement('textarea');
             textarea.value = shareUrl;
             textarea.style.position = 'fixed';
-            textarea.style.left = '-9999px'; // Hide off-screen
+            textarea.style.left = '-9999px';
             document.body.appendChild(textarea);
             textarea.focus();
             textarea.select();
@@ -821,10 +846,10 @@
             hideModal(replyModal);
             currentConfessionToReplyTo = null;
             if (unsubscribeReplies) {
-                unsubscribeReplies(); // Unsubscribe from replies listener
+                unsubscribeReplies();
                 unsubscribeReplies = null;
             }
-            replyMessageInput.value = ''; // Clear reply input
+            replyMessageInput.value = '';
         }
 
         closeReplyModalBtn.addEventListener('click', closeReplyModal);
@@ -856,7 +881,7 @@
         }
 
         function renderReplies(replies) {
-            repliesListContainer.innerHTML = ''; // Clear existing replies
+            repliesListContainer.innerHTML = '';
             if (replies.length === 0) {
                 noRepliesMessage.classList.remove('hidden');
             } else {
@@ -873,9 +898,8 @@
                     repliesListContainer.appendChild(replyDiv);
                 });
             }
-            // Corrected the typo here: repliesEndContainer to repliesEndRef
-            repliesListContainer.appendChild(repliesEndRef); // Ensure ref is at the end
-            repliesEndRef.scrollIntoView({ behavior: 'smooth' }); // Scroll to bottom
+            repliesListContainer.appendChild(repliesEndRef);
+            repliesEndRef.scrollIntoView({ behavior: 'smooth' });
         }
 
         postReplyBtn.addEventListener('click', async () => {
