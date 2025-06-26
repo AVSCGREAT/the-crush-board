@@ -371,6 +371,19 @@
             modalElement.classList.add('hidden-modal');
         }
 
+        // Function to update the text of the clear search button
+        function updateClearSearchButtonText() {
+            if (searchTerm.trim() !== '') {
+                clearSearchBtn.textContent = 'View Results';
+                clearSearchBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+                clearSearchBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            } else {
+                clearSearchBtn.textContent = 'Clear Search';
+                clearSearchBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                clearSearchBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
+            }
+        }
+
         // --- Main App Logic ---
 
         // Initialize Firebase
@@ -625,6 +638,7 @@
                 });
 
                 applyFiltersAndSort();
+                updateClearSearchButtonText(); // Update button text on data load
                 hideLoadingSpinner();
             }, (error) => {
                 console.error("Failed to fetch confessions:", error);
@@ -702,11 +716,10 @@
 
         // Search Modal
         openSearchBtn.addEventListener('click', () => {
-            searchTermInput.value = ''; // Clear search term on open
-            searchTerm = ''; // Reset search term state
-            searchCategorySelect.value = 'text'; // Reset category
+            searchTermInput.value = searchTerm; // Keep current search term if any
+            searchCategorySelect.value = searchCategory; // Keep current category
+            updateClearSearchButtonText(); // Update button text when modal opens
             showModal(searchModal);
-            applyFiltersAndSort(); // Re-apply filters to show current view
         });
         closeSearchModalBtn.addEventListener('click', () => hideModal(searchModal));
         searchModal.addEventListener('click', (e) => {
@@ -716,16 +729,27 @@
         searchTermInput.addEventListener('input', () => {
             searchTerm = searchTermInput.value;
             applyFiltersAndSort();
+            updateClearSearchButtonText(); // Update button text as user types
         });
         searchCategorySelect.addEventListener('change', () => {
             searchCategory = searchCategorySelect.value;
             applyFiltersAndSort();
+            updateClearSearchButtonText(); // Update button text if category changes during an active search
         });
         clearSearchBtn.addEventListener('click', () => {
-            searchTermInput.value = '';
-            searchTerm = '';
-            applyFiltersAndSort(); // Apply filters to return to default view
+            if (searchTerm.trim() !== '') {
+                // If there's an active search, clicking 'View Results' closes the modal
+                hideModal(searchModal);
+            } else {
+                // If no active search, 'Clear Search' button clears input and state
+                searchTermInput.value = '';
+                searchTerm = '';
+                applyFiltersAndSort(); // This will revert to the default view (Recent, Archived, Popular)
+                hideModal(searchModal);
+            }
+            updateClearSearchButtonText(); // Ensure button text is correct after action
         });
+
 
         // Info Modal
         closeInfoModalBtn.addEventListener('click', closeInfoModal);
@@ -736,18 +760,27 @@
         // View Buttons
         viewRecentBtn.addEventListener('click', () => {
             currentView = 'recent';
+            searchTerm = ''; // Clear search term when changing view
+            searchTermInput.value = ''; // Clear search input visually
             updateViewButtons();
             applyFiltersAndSort();
+            updateClearSearchButtonText(); // Update search button text if open
         });
         viewArchiveBtn.addEventListener('click', () => {
             currentView = 'archive';
+            searchTerm = ''; // Clear search term when changing view
+            searchTermInput.value = ''; // Clear search input visually
             updateViewButtons();
             applyFiltersAndSort();
+            updateClearSearchButtonText(); // Update search button text if open
         });
         viewPopularBtn.addEventListener('click', () => {
             currentView = 'popular';
+            searchTerm = ''; // Clear search term when changing view
+            searchTermInput.value = ''; // Clear search input visually
             updateViewButtons();
             applyFiltersAndSort();
+            updateClearSearchButtonText(); // Update search button text if open
         });
 
         function updateViewButtons() {
