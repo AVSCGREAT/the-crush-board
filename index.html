@@ -97,7 +97,8 @@
             max-width: 24rem;
             text-align: center;
         }
-        .modal-container.notes-modal { /* Added for notes modal */
+        .modal-container.notes-modal,
+        .modal-container.report-modal { /* Added for notes modal and report modal */
             max-width: 28rem;
             min-height: 200px;
         }
@@ -134,6 +135,10 @@
             <button id="view-popular-btn" class="p-2 rounded-full shadow-sm transition duration-300 ease-in-out transform bg-green-400 hover:bg-green-500 text-white hover:scale-105" title="Show Popular Confessions">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
             </button>
+            <!-- My Confessions Button -->
+            <button id="view-my-confessions-btn" class="p-2 rounded-full shadow-sm transition duration-300 ease-in-out transform bg-blue-400 hover:bg-blue-500 text-white hover:scale-105" title="Show My Confessions">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </button>
         </div>
     </nav>
 
@@ -141,7 +146,13 @@
     <header id="main-header" class="bg-white/90 backdrop-blur-lg p-6 rounded-xl shadow-md mb-8 w-full max-w-3xl text-center border border-gray-100 relative">
         <h1 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 mb-2">💘 The Crush Board 💘</h1>
         <p class="text-gray-700 text-lg">Browse recent confessions or post your own!</p>
-        <p id="user-id-display" class="text-sm text-gray-600 mt-2 bg-white/70 rounded-full px-3 py-1 inline-block hidden">User ID: <span class="font-mono text-xs break-all"></span></p>
+        <div class="flex items-center justify-center text-sm text-gray-600 mt-2 bg-white/70 rounded-full px-3 py-1 inline-flex hidden" id="user-id-display-container">
+            User ID: <span id="user-id-display" class="font-mono text-xs break-all ml-1"></span>
+            <button id="copy-user-id-btn" class="ml-2 p-1 rounded-full bg-gray-200 hover:bg-gray-300 transition duration-200" title="Copy User ID">
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2A2 2 0 0114 5m0 0h2m-2 0h2M14 7v2m-4 0v2m-4 0v2"></path></svg>
+            </button>
+            <span id="user-id-copied-message" class="text-xs text-green-700 bg-green-100 rounded-full px-2 py-1 ml-2 hidden">Copied!</span>
+        </div>
         <button id="clear-shared-confession-btn" class="absolute top-4 left-1/2 -translate-x-1/2 bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full shadow-sm transition duration-300 ease-in-out text-sm hidden" title="View All Confessions">
             View All
         </button>
@@ -253,6 +264,40 @@
         </div>
     </div>
 
+    <!-- Report Modal (New) -->
+    <div id="report-modal" class="modal-overlay hidden-modal">
+        <div class="modal-container report-modal">
+            <button id="close-report-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Report Confession</h2>
+            <p class="text-gray-600 mb-4">Please specify why you are reporting this confession.</p>
+            <div class="space-y-3">
+                <label class="flex items-center">
+                    <input type="radio" name="reportReason" value="inappropriate" class="form-radio text-red-500" checked>
+                    <span class="ml-2 text-gray-700">Inappropriate Content</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="radio" name="reportReason" value="spam" class="form-radio text-red-500">
+                    <span class="ml-2 text-gray-700">Spam or Misleading</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="radio" name="reportReason" value="harassment" class="form-radio text-red-500">
+                    <span class="ml-2 text-gray-700">Harassment or Hate Speech</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="radio" name="reportReason" value="other" class="form-radio text-red-500">
+                    <span class="ml-2 text-gray-700">Other (Please specify below)</span>
+                </label>
+                <textarea id="report-details-input" class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-300 focus:border-transparent transition duration-200 resize-y min-h-[80px] placeholder-gray-400 mt-4" placeholder="Optional: Provide more details"></textarea>
+            </div>
+            <button id="submit-report-btn" class="w-full py-3 px-6 rounded-full font-bold text-white shadow-md transform transition duration-300 ease-in-out mt-6 bg-red-500 hover:bg-red-600 hover:scale-[1.02]">
+                Submit Report
+            </button>
+        </div>
+    </div>
+
+
     <!-- Info/Error Modal -->
     <div id="info-modal" class="modal-overlay hidden-modal">
         <div class="modal-container info-modal">
@@ -298,13 +343,17 @@
         let searchCategory = 'text';
         let sharedConfessionId = null;
         let currentConfessionToReplyTo = null;
+        let currentConfessionToReport = null; // New state for reporting
         let isPosting = false;
         let isReplying = false;
+        let isReporting = false;
 
         // --- DOM Elements ---
         const loadingSpinner = document.getElementById('loading-spinner');
-        const userIdDisplay = document.getElementById('user-id-display');
-        const userIdSpan = userIdDisplay.querySelector('span');
+        const userIdDisplayContainer = document.getElementById('user-id-display-container'); // Changed from userIdDisplay
+        const userIdSpan = document.getElementById('user-id-display'); // Kept for the span inside
+        const copyUserIdBtn = document.getElementById('copy-user-id-btn'); // New
+        const userIdCopiedMessage = document.getElementById('user-id-copied-message'); // New
         const clearSharedConfessionBtn = document.getElementById('clear-shared-confession-btn');
 
         const openFormModalBtn = document.getElementById('open-form-modal-btn');
@@ -313,7 +362,7 @@
         const messageInput = document.getElementById('message-input');
         const crushNameInput = document.getElementById('crush-name-input');
         const socialMediaInput = document.getElementById('social-media-input');
-        const notesInput = document.getElementById('notes-input'); // New notes input
+        const notesInput = document.getElementById('notes-input');
         const postConfessionBtn = document.getElementById('post-confession-btn');
 
         const openSearchBtn = document.getElementById('open-search-btn');
@@ -332,11 +381,16 @@
         const replyMessageInput = document.getElementById('reply-message-input');
         const postReplyBtn = document.getElementById('post-reply-btn');
 
-        // Notes Modal Elements (New)
         const notesModal = document.getElementById('notes-modal');
         const closeNotesModalBtn = document.getElementById('close-notes-modal-btn');
         const notesContent = document.getElementById('notes-content');
         const notesOkBtn = document.getElementById('notes-ok-btn');
+
+        const reportModal = document.getElementById('report-modal'); // New
+        const closeReportModalBtn = document.getElementById('close-report-modal-btn'); // New
+        const reportReasonRadios = document.querySelectorAll('input[name="reportReason"]'); // New
+        const reportDetailsInput = document.getElementById('report-details-input'); // New
+        const submitReportBtn = document.getElementById('submit-report-btn'); // New
 
         const infoModal = document.getElementById('info-modal');
         const infoModalMessage = document.getElementById('info-modal-message');
@@ -349,6 +403,7 @@
         const viewRecentBtn = document.getElementById('view-recent-btn');
         const viewArchiveBtn = document.getElementById('view-archive-btn');
         const viewPopularBtn = document.getElementById('view-popular-btn');
+        const viewMyConfessionsBtn = document.getElementById('view-my-confessions-btn'); // New
 
         // --- SVG Icons ---
         function getHeartIconSvg(filled, className = "") {
@@ -369,8 +424,12 @@
             return `<svg class="w-5 h-5 text-gray-600 hover:text-blue-700 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>`;
         }
 
-        function getNotesIconSvg() { // New Notes Icon SVG
+        function getNotesIconSvg() {
             return `<svg class="w-5 h-5 text-gray-600 hover:text-green-700 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
+        }
+
+        function getReportIconSvg() { // New report icon
+            return `<svg class="w-5 h-5 text-gray-600 hover:text-red-700 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
         }
 
         // --- Utility Functions ---
@@ -435,7 +494,6 @@
                 const idFromUrl = params.get('confessionId');
                 if (idFromUrl) {
                     sharedConfessionId = idFromUrl;
-                    // Clear the URL parameter after reading it to prevent re-applying on refresh
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
 
@@ -444,7 +502,7 @@
                     if (user) {
                         userId = user.uid;
                         userIdSpan.textContent = userId;
-                        userIdDisplay.classList.remove('hidden');
+                        userIdDisplayContainer.classList.remove('hidden'); // Show user ID container
                     } else {
                         try {
                             await signInAnonymously(authInstance);
@@ -513,6 +571,9 @@
                                 ${getNotesIconSvg()}
                             </button>
                         ` : ''}
+                        <button class="report-btn p-1 rounded-full bg-white shadow-sm hover:bg-gray-50 transition duration-200" title="Report this confession" data-confession-id="${confession.id}">
+                            ${getReportIconSvg()}
+                        </button>
                     </div>
                 </div>
             `;
@@ -536,7 +597,6 @@
                 }
             });
 
-            // Add event listener for the new notes button
             const notesBtn = card.querySelector('.notes-btn');
             if (notesBtn) {
                 notesBtn.addEventListener('click', (e) => {
@@ -544,6 +604,18 @@
                     const confessionWithNotes = allConfessions.find(c => c.id === confessionId);
                     if (confessionWithNotes && confessionWithNotes.notes) {
                         openNotesModal(confessionWithNotes.notes);
+                    }
+                });
+            }
+
+            // Add event listener for the new report button
+            const reportBtn = card.querySelector('.report-btn');
+            if (reportBtn) {
+                reportBtn.addEventListener('click', (e) => {
+                    const confessionId = e.currentTarget.dataset.confessionId;
+                    currentConfessionToReport = allConfessions.find(c => c.id === confessionId);
+                    if (currentConfessionToReport) {
+                        openReportModal();
                     }
                 });
             }
@@ -569,9 +641,9 @@
             if (sharedConfessionId) {
                 confessionsListTitle.textContent = "Shared Confession";
                 clearSharedConfessionBtn.classList.remove('hidden');
-            } else if (searchTerm) { // If search is active, title reflects search
+            } else if (searchTerm) {
                  confessionsListTitle.textContent = "Search Results";
-                 clearSharedConfessionBtn.classList.add('hidden'); // No clear button needed for search results themselves
+                 clearSharedConfessionBtn.classList.add('hidden');
             }
             else if (currentView === 'recent') {
                 confessionsListTitle.textContent = "Recent Confessions";
@@ -582,19 +654,22 @@
             } else if (currentView === 'popular') {
                 confessionsListTitle.textContent = "Popular Confessions";
                 clearSharedConfessionBtn.classList.add('hidden');
+            } else if (currentView === 'my') { // New: My Confessions title
+                confessionsListTitle.textContent = "My Confessions";
+                clearSharedConfessionBtn.classList.add('hidden');
             }
         }
 
         // Filter and sort confessions based on current view and search
         function applyFiltersAndSort() {
-            let confessionsToProcess = [...allConfessions]; // Start with ALL confessions
+            let confessionsToProcess = [...allConfessions];
 
             // 1. Handle shared confession ID (highest priority, overrides all others)
             if (sharedConfessionId) {
                 const foundConfession = confessionsToProcess.find(c => c.id === sharedConfessionId);
                 filteredConfessions = foundConfession ? [foundConfession] : [];
                 renderConfessionsList();
-                return; // Exit early if a specific shared confession is being viewed
+                return;
             }
 
             // 2. Apply search term filter (if active)
@@ -629,7 +704,6 @@
                         const confessionDate = confession.timestamp?.toDate ? confession.timestamp.toDate() : new Date(0);
                         return confessionDate > oneWeekAgo;
                     });
-                    // Ensure recent confessions are always sorted newest first
                     confessionsToProcess.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
                 } else if (currentView === 'archive') {
                     const oneWeekAgo = new Date();
@@ -638,15 +712,16 @@
                         const confessionDate = confession.timestamp?.toDate ? confession.timestamp.toDate() : new Date(0);
                         return confessionDate <= oneWeekAgo;
                     });
-                    // Ensure archived confessions are also sorted newest first among themselves
                     confessionsToProcess.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
                 } else if (currentView === 'popular') {
-                    // Sort by likes, newest as tie-breaker
                     confessionsToProcess.sort((a, b) => {
                         const likesDiff = (b.likesCount || 0) - (a.likesCount || 0);
                         if (likesDiff !== 0) return likesDiff;
                         return (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0);
                     });
+                } else if (currentView === 'my') { // New: Filter for user's own confessions
+                    confessionsToProcess = confessionsToProcess.filter(confession => confession.userId === userId);
+                    confessionsToProcess.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
                 }
             } else { // If a search term is active, sort by newest for consistent results
                 confessionsToProcess.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
@@ -656,32 +731,32 @@
             renderConfessionsList();
         }
 
-        // Listener for confessions data
+        // Sets up a real-time listener for confessions data from Firestore
         let unsubscribeConfessions = null;
         function setupConfessionsListener() {
             if (unsubscribeConfessions) {
-                unsubscribeConfessions();
+                unsubscribeConfessions(); // Detach existing listener
             }
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const publicCollectionPath = `artifacts/${appId}/public/data/crush_board`;
+            const publicCollectionPath = `artifacts/${APP_ID}/public/data/crush_board`;
             const q = query(collection(db, publicCollectionPath));
 
             unsubscribeConfessions = onSnapshot(q, (snapshot) => {
                 let fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+                // Ensure likesCount and likedBy are properly initialized
                 fetched = fetched.map(conf => ({
                     ...conf,
                     likesCount: typeof conf.likesCount === 'number' ? conf.likesCount : 0,
                     likedBy: typeof conf.likedBy === 'object' && conf.likedBy !== null ? conf.likedBy : {},
-                    notes: typeof conf.notes === 'string' ? conf.notes : '' // Initialize notes
+                    notes: typeof conf.notes === 'string' ? conf.notes : ''
                 }));
 
                 // Keep allConfessions sorted by newest first for consistent base
                 allConfessions = fetched.sort((a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0));
 
+                // Re-categorize confessions based on updated data
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
                 recentConfessions = allConfessions.filter(confession => {
                     const confessionDate = confession.timestamp?.toDate ? confession.timestamp.toDate() : new Date(0);
                     return confessionDate > oneWeekAgo;
@@ -691,8 +766,8 @@
                     return confessionDate <= oneWeekAgo;
                 });
 
-                applyFiltersAndSort();
-                updateClearSearchButtonText(); // Update button text on data load
+                applyFiltersAndSort(); // Re-render with new data
+                updateClearSearchButtonText(); // Update search button text if needed
                 hideLoadingSpinner();
             }, (error) => {
                 console.error("Failed to fetch confessions:", error);
@@ -708,7 +783,7 @@
             messageInput.value = '';
             crushNameInput.value = '';
             socialMediaInput.value = '';
-            notesInput.value = ''; // Clear notes input
+            notesInput.value = '';
             showModal(confessionFormModal);
         });
         closeFormModalBtn.addEventListener('click', () => hideModal(confessionFormModal));
@@ -721,7 +796,7 @@
             const message = messageInput.value.trim();
             const crushName = crushNameInput.value.trim();
             const socialMedia = socialMediaInput.value.trim();
-            const notes = notesInput.value.trim(); // Get notes value
+            const notes = notesInput.value.trim();
 
             if (!message || !crushName) {
                 showInfoModal("Please enter a message and your crush's name.");
@@ -744,7 +819,7 @@
                     message: message,
                     crushName: crushName,
                     socialMedia: socialMedia,
-                    notes: notes, // Save notes to Firestore
+                    notes: notes,
                     timestamp: serverTimestamp(),
                     userId: userId,
                     likesCount: 0,
@@ -766,9 +841,9 @@
 
         // Search Modal
         openSearchBtn.addEventListener('click', () => {
-            searchTermInput.value = searchTerm; // Keep current search term if any
-            searchCategorySelect.value = searchCategory; // Keep current category
-            updateClearSearchButtonText(); // Update button text when modal opens
+            searchTermInput.value = searchTerm;
+            searchCategorySelect.value = searchCategory;
+            updateClearSearchButtonText();
             showModal(searchModal);
         });
         closeSearchModalBtn.addEventListener('click', () => hideModal(searchModal));
@@ -779,27 +854,24 @@
         searchTermInput.addEventListener('input', () => {
             searchTerm = searchTermInput.value;
             applyFiltersAndSort();
-            updateClearSearchButtonText(); // Update button text as user types
+            updateClearSearchButtonText();
         });
         searchCategorySelect.addEventListener('change', () => {
             searchCategory = searchCategorySelect.value;
             applyFiltersAndSort();
-            updateClearSearchButtonText(); // Update button text if category changes during an active search
+            updateClearSearchButtonText();
         });
         clearSearchBtn.addEventListener('click', () => {
             if (searchTerm.trim() !== '') {
-                // If there's an active search, clicking 'View Results' closes the modal
                 hideModal(searchModal);
             } else {
-                // If no active search, 'Clear Search' button clears input and state
                 searchTermInput.value = '';
                 searchTerm = '';
-                applyFiltersAndSort(); // This will revert to the default view (Recent, Archived, Popular)
+                applyFiltersAndSort();
                 hideModal(searchModal);
             }
-            updateClearSearchButtonText(); // Ensure button text is correct after action
+            updateClearSearchButtonText();
         });
-
 
         // Info Modal
         closeInfoModalBtn.addEventListener('click', closeInfoModal);
@@ -810,37 +882,49 @@
         // View Buttons
         viewRecentBtn.addEventListener('click', () => {
             currentView = 'recent';
-            searchTerm = ''; // Clear search term when changing view
-            searchTermInput.value = ''; // Clear search input visually
+            searchTerm = '';
+            searchTermInput.value = '';
             updateViewButtons();
             applyFiltersAndSort();
-            updateClearSearchButtonText(); // Update search button text if open
+            updateClearSearchButtonText();
         });
         viewArchiveBtn.addEventListener('click', () => {
             currentView = 'archive';
-            searchTerm = ''; // Clear search term when changing view
-            searchTermInput.value = ''; // Clear search input visually
+            searchTerm = '';
+            searchTermInput.value = '';
             updateViewButtons();
             applyFiltersAndSort();
-            updateClearSearchButtonText(); // Update search button text if open
+            updateClearSearchButtonText();
         });
         viewPopularBtn.addEventListener('click', () => {
             currentView = 'popular';
-            searchTerm = ''; // Clear search term when changing view
-            searchTermInput.value = ''; // Clear search input visually
+            searchTerm = '';
+            searchTermInput.value = '';
             updateViewButtons();
             applyFiltersAndSort();
-            updateClearSearchButtonText(); // Update search button text if open
+            updateClearSearchButtonText();
+        });
+        viewMyConfessionsBtn.addEventListener('click', () => { // New: My Confessions button handler
+            currentView = 'my';
+            searchTerm = '';
+            searchTermInput.value = '';
+            updateViewButtons();
+            applyFiltersAndSort();
+            updateClearSearchButtonText();
         });
 
         function updateViewButtons() {
-            viewRecentBtn.classList.remove('bg-pink-600');
+            // Reset all buttons to default state
+            viewRecentBtn.classList.remove('bg-pink-500');
             viewRecentBtn.classList.add('bg-pink-400', 'hover:bg-pink-500');
-            viewArchiveBtn.classList.remove('bg-indigo-600');
+            viewArchiveBtn.classList.remove('bg-indigo-500');
             viewArchiveBtn.classList.add('bg-indigo-400', 'hover:bg-indigo-500');
-            viewPopularBtn.classList.remove('bg-green-600');
+            viewPopularBtn.classList.remove('bg-green-500');
             viewPopularBtn.classList.add('bg-green-400', 'hover:bg-green-500');
+            viewMyConfessionsBtn.classList.remove('bg-blue-500'); // New
+            viewMyConfessionsBtn.classList.add('bg-blue-400', 'hover:bg-blue-500'); // New
 
+            // Set active state for the current view
             if (currentView === 'recent') {
                 viewRecentBtn.classList.add('bg-pink-500');
                 viewRecentBtn.classList.remove('bg-pink-400', 'hover:bg-pink-500');
@@ -850,6 +934,9 @@
             } else if (currentView === 'popular') {
                 viewPopularBtn.classList.add('bg-green-500');
                 viewPopularBtn.classList.remove('bg-green-400', 'hover:bg-green-500');
+            } else if (currentView === 'my') { // New
+                viewMyConfessionsBtn.classList.add('bg-blue-500');
+                viewMyConfessionsBtn.classList.remove('bg-blue-400', 'hover:bg-blue-500');
             }
         }
 
@@ -868,8 +955,7 @@
                 return;
             }
 
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const confessionRef = doc(db, `artifacts/${appId}/public/data/crush_board`, confessionId);
+            const confessionRef = doc(db, `artifacts/${APP_ID}/public/data/crush_board`, confessionId);
 
             try {
                 if (currentlyLiked) {
@@ -912,6 +998,32 @@
             document.body.removeChild(textarea);
         }
 
+        // --- Copy User ID Functionality ---
+        copyUserIdBtn.addEventListener('click', () => {
+            if (userId) {
+                const textarea = document.createElement('textarea');
+                textarea.value = userId;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    userIdCopiedMessage.classList.remove('hidden');
+                    setTimeout(() => {
+                        userIdCopiedMessage.classList.add('hidden');
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy user ID:', err);
+                    showInfoModal("Failed to copy User ID. Please copy manually: " + userId);
+                } finally {
+                    document.body.removeChild(textarea);
+                }
+            }
+        });
+
+
         // --- Reply Modal Logic ---
         let unsubscribeReplies = null; // Listener for replies
 
@@ -950,8 +1062,7 @@
                 return;
             }
 
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const repliesCollectionPath = `artifacts/${appId}/public/data/crush_board/${confessionId}/replies`;
+            const repliesCollectionPath = `artifacts/${APP_ID}/public/data/crush_board/${confessionId}/replies`;
             const q = query(collection(db, repliesCollectionPath), orderBy('timestamp', 'asc'));
 
             unsubscribeReplies = onSnapshot(q, (snapshot) => {
@@ -1003,8 +1114,7 @@
             postReplyBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600', 'hover:scale-[1.02]');
 
             try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const repliesCollectionPath = `artifacts/${appId}/public/data/crush_board/${currentConfessionToReplyTo.id}/replies`;
+                const repliesCollectionPath = `artifacts/${APP_ID}/public/data/crush_board/${currentConfessionToReplyTo.id}/replies`;
                 await addDoc(collection(db, repliesCollectionPath), {
                     message: replyMessage,
                     timestamp: serverTimestamp(),
@@ -1024,7 +1134,7 @@
             }
         });
 
-        // --- Notes Modal Logic (New) ---
+        // --- Notes Modal Logic ---
         function openNotesModal(notes) {
             notesContent.textContent = notes || "No extra notes for this confession.";
             if (!notes) {
@@ -1047,14 +1157,66 @@
             if (e.target === notesModal) closeNotesModal();
         });
 
+        // --- Report Modal Logic (New) ---
+        function openReportModal() {
+            // Reset radio buttons and textarea
+            reportReasonRadios.forEach(radio => radio.checked = false);
+            reportReasonRadios[0].checked = true; // Select 'Inappropriate' by default
+            reportDetailsInput.value = '';
+            showModal(reportModal);
+        }
+
+        function closeReportModal() {
+            hideModal(reportModal);
+            currentConfessionToReport = null;
+        }
+
+        closeReportModalBtn.addEventListener('click', closeReportModal);
+        reportModal.addEventListener('click', (e) => {
+            if (e.target === reportModal) closeReportModal();
+        });
+
+        submitReportBtn.addEventListener('click', async () => {
+            if (!db || !userId || !currentConfessionToReport?.id) {
+                showInfoModal("Cannot submit report: App not connected or confession missing.");
+                return;
+            }
+
+            const selectedReason = Array.from(reportReasonRadios).find(radio => radio.checked)?.value || 'unknown';
+            const reportDetails = reportDetailsInput.value.trim();
+
+            isReporting = true;
+            submitReportBtn.textContent = 'Submitting...';
+            submitReportBtn.disabled = true;
+            submitReportBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            submitReportBtn.classList.remove('bg-red-500', 'hover:bg-red-600', 'hover:scale-[1.02]');
+
+            try {
+                const reportsCollectionPath = `artifacts/${APP_ID}/public/data/reports`;
+                await addDoc(collection(db, reportsCollectionPath), {
+                    reportedConfessionId: currentConfessionToReport.id,
+                    reportedByUserId: userId,
+                    reason: selectedReason,
+                    details: reportDetails,
+                    timestamp: serverTimestamp(),
+                });
+                hideModal(reportModal);
+                showInfoModal("Report submitted successfully! Thank you for helping us keep the community safe.");
+            } catch (error) {
+                console.error("Error submitting report:", error);
+                showInfoModal(`Failed to submit report: ${error.message}. Please try again.`);
+            } finally {
+                isReporting = false;
+                submitReportBtn.textContent = 'Submit Report';
+                submitReportBtn.disabled = false;
+                submitReportBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                submitReportBtn.classList.add('bg-red-500', 'hover:bg-red-600', 'hover:scale-[1.02]');
+            }
+        });
+
 
         // --- Initialize the App ---
         window.addEventListener('load', initializeFirebase);
     </script>
-    <!-- Elfsight Cookie Consent | Cookie Consent -->
-<script src="https://static.elfsight.com/platform/platform.js" async></script>
-<div class="elfsight-app-47dbee87-34da-4439-9799-d49b620e4358" data-elfsight-app-lazy></div>
-     <a href='https://www.free-counters.org/'>Get free Counters</a> <script type='text/javascript' src='https://www.freevisitorcounters.com/auth.php?id=c5b660e4d0e82de0eb550c65a2a9db6458e12300'></script>
-<script type="text/javascript" src="https://www.freevisitorcounters.com/en/home/counter/1356182/t/4"></script>
 </body>
 </html>
