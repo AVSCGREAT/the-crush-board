@@ -260,9 +260,7 @@
         };
 
         const __app_id = "crush-board"; // Used for Firestore collection paths. Keep this as it's a conceptual app ID.
-        // __initial_auth_token is not needed for anonymous sign-in, which is used for GitHub Pages deployment.
-        const __initial_auth_token = null; 
-        // If you intended to use custom tokens, you would need a server to generate them.
+        const __initial_auth_token = null; // Explicitly setting this as null for static deployment (anonymous sign-in)
 
         // --- Global State Variables ---
         let db = null;
@@ -403,7 +401,6 @@
                     } else {
                         try {
                             // Sign in anonymously for public data access on static sites.
-                            // If you intend to use other auth methods, configure them in Firebase console.
                             await signInAnonymously(authInstance);
                         } catch (error) {
                             console.error("Authentication Error:", error);
@@ -639,6 +636,7 @@
             }
             if (!db || !userId) {
                 showInfoModal("Cannot post: Application not fully connected. Please refresh the page.");
+                console.error("DEBUG: db or userId is null. db:", db, "userId:", userId); // Added debug log
                 return;
             }
 
@@ -651,6 +649,9 @@
             try {
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                 const publicCollectionPath = `artifacts/${appId}/public/data/crush_board`;
+                console.log("DEBUG: Attempting to add document to:", publicCollectionPath); // Debug log
+                console.log("DEBUG: userId before addDoc:", userId); // Debug log
+
                 await addDoc(collection(db, publicCollectionPath), {
                     message: message,
                     crushName: crushName,
@@ -664,7 +665,9 @@
                 showInfoModal("Your confession has been posted successfully!");
             } catch (error) {
                 console.error("Error posting confession:", error);
-                showInfoModal(`Failed to post your confession: ${error.message}.`);
+                console.error("Firebase Error Code:", error.code); // Log error code
+                console.error("Firebase Error Message:", error.message); // Log error message
+                showInfoModal(`Failed to post your confession: ${error.message}. Please check console for details.`);
             } finally {
                 isPosting = false;
                 postConfessionBtn.textContent = 'Post My Confession';
