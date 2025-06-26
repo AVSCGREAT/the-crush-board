@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Crush Board</title>
+    <!-- Favicon (heart emoji) -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💘%3C/text%3E%3C/svg%3E" />
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Inter Font -->
@@ -109,8 +111,9 @@
 <body class="min-h-screen p-4 font-inter text-gray-800 flex flex-col items-center justify-between">
 
     <!-- Loading Spinner -->
-    <div id="loading-spinner" class="fixed inset-0 bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 flex items-center justify-center z-[200]">
+    <div id="loading-spinner" class="fixed inset-0 bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 flex flex-col items-center justify-center z-[200] space-y-4">
         <div class="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-pink-500"></div>
+        <p class="text-xl font-bold text-gray-700">Built by AVSC - Have Fun!</p>
     </div>
 
     <!-- Navigation Bar -->
@@ -726,7 +729,6 @@
             }
             if (!db || !userId) {
                 showInfoModal("Cannot post: Application not fully connected. Please refresh the page.");
-                console.error("DEBUG: db or userId is null. db:", db, "userId:", userId);
                 return;
             }
 
@@ -737,11 +739,7 @@
             postConfessionBtn.classList.remove('bg-gradient-to-r', 'from-purple-500', 'to-pink-500', 'hover:scale-[1.02]', 'hover:shadow-lg');
 
             try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const publicCollectionPath = `artifacts/${appId}/public/data/crush_board`;
-                console.log("DEBUG: Attempting to add document to:", publicCollectionPath);
-                console.log("DEBUG: userId before addDoc:", userId);
-
+                const publicCollectionPath = `artifacts/${APP_ID}/public/data/crush_board`;
                 await addDoc(collection(db, publicCollectionPath), {
                     message: message,
                     crushName: crushName,
@@ -756,9 +754,7 @@
                 showInfoModal("Your confession has been posted successfully!");
             } catch (error) {
                 console.error("Error posting confession:", error);
-                console.error("Firebase Error Code:", error.code);
-                console.error("Firebase Error Message:", error.message);
-                showInfoModal(`Failed to post your confession: ${error.message}. Please check console for details.`);
+                showInfoModal(`Failed to post your confession: ${error.message}.`);
             } finally {
                 isPosting = false;
                 postConfessionBtn.textContent = 'Post My Confession';
